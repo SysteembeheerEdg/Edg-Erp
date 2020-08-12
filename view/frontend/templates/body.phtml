@@ -1,0 +1,101 @@
+<?php
+	list($tvc_data,$get_action) = $block->getAction();
+	if ($this->FBPixelEnabled() == 1){
+		echo "<script>
+			  !function(f,b,e,v,n,t,s)
+			  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+			  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+			  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+			  n.queue=[];t=b.createElement(e);t.async=!0;
+			  t.src=v;s=b.getElementsByTagName(e)[0];
+			  s.parentNode.insertBefore(t,s)}(window, document,'script',
+			  'https://connect.facebook.net/en_US/fbevents.js');
+			  fbq('init', ".$this->getFbPixelID().");
+			  fbq('track','Pageview');
+			</script>
+		  <noscript><img height='1' width='1' style='display:none'
+			  src='https://www.facebook.com/tr?id=".$this->getFbPixelID()."&ev=PageView&noscript=1'
+			/></noscript>";  
+	}
+	if( $get_action == 'catalog_product_view' && $this->FBPixelEnabled() == 1) {
+		echo "<script>
+				fbq('track', 'ViewContent', {
+					'content_name':tvc_pp.tvc_name,
+					'content_type':'product',
+					'content_ids':tvc_pp.tvc_id,
+					'content_category':tvc_pp.tvc_c,
+					'value': tvc_pp.tvc_p,
+					'currency': '".$block->getLocalCurrency()."',
+				});
+				var tvc_add_to_cart = document.getElementById('product-addtocart-button');
+				(tvc_add_to_cart).addEventListener('click', function(event) {
+					fbq('track', 'AddToCart', {
+						'content_name':tvc_pp.tvc_name,
+						'content_type':'product',
+						'content_ids':tvc_pp.tvc_id,
+						'content_category':tvc_pp.tvc_c,
+						'value': tvc_pp.tvc_p,
+						'currency':  '".$block->getLocalCurrency()."',
+					});
+				});
+				
+		</script>";
+	}
+	if( $get_action == 'checkout_index_index'  && $this->FBPixelEnabled() == 1) {
+		
+		list($tvc_cart_total, $tvc_count) = $block->getTotal();
+		echo "<script>
+		var content_ids= '';
+		for (var i in tvc_ch){
+			if(tvc_ch[i].tvc_i){
+				content_ids += tvc_ch[i].tvc_id + ',';
+			}
+		}
+		content_ids = content_ids.replace(/,\s*$/, '');
+			fbq('track', 'InitiateCheckout',{ 
+				'currency':'" . $block->getLocalCurrency() . "',
+				'content_type':'product',
+				'content_ids':[ content_ids ],
+				'value': '" . $tvc_cart_total . "',
+				'num_items': '".$tvc_count."'
+			});
+		</script>";
+	}
+	if( $get_action == 'checkout_onepage_success') {
+		$tvc_order = $block->getTotalOrder();
+		if($block->AdwordsEnabled() == 1){
+			echo '<script type="text/javascript">
+					/* <![CDATA[ */
+					var google_conversion_id = '.$this->getAdwordsID().';
+					var google_conversion_label = "'.$this->getAdwordsLabel().'";
+					var google_conversion_value = '.$tvc_order->getGrandTotal().';
+					var google_conversion_currency ="'.$block->getLocalCurrency().'";
+					var google_remarketing_only = false;
+					 /* ]]> */ 
+				   </script>
+				   <script type="text/javascript"
+				   src="//www.googleadservices.com/pagead/conversion.js">
+				   </script>
+				   <noscript>
+					   <div style="display:inline;">
+				   <img height="1" width="1" style="border-style:none;" alt=""
+				   src="//www.googleadservices.com/pagead/
+				   conversion/'.$this->getAdwordsID().'/?value='.$tvc_order->getGrandTotal().'&amp;currency_code="'.$block->getLocalCurrency().'"
+				   &amp;label='.$this->getAdwordsLabel().'&amp;guid=ON&amp;script=0">
+					</div>
+				   </noscript>';
+				   
+		}
+		if ($block->FBPixelEnabled() == 1){
+			$fb_purchase_code = "";
+			foreach($tvc_order->getAllVisibleItems() as $item){
+				$fb_purchase_code .= "{'id':'" . $item->getProductId() . "','quantity':'" . $item->getQtyOrdered() . "','item_price':'" .  $item->getBasePrice() . "'},";
+			}
+			echo '<script>
+				fbq("track", "Purchase", {value:'.$tvc_order->getGrandTotal().', currency: "'.$block->getLocalCurrency().'",
+					contents:['.$fb_purchase_code.']
+				});
+				</script>';
+		}
+	}
+?>

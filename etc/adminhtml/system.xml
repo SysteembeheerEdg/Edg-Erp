@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * system.xml
+ *
+ * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
+ * @author    dev@boldcommerce.nl
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="edg_pim_tab" translate="label" sortOrder="1">
+            <label>EDG PIM</label>
+        </tab>
+        <section id="bold_orderexim" translate="label" type="text" showInDefault="1">
+            <label>Bold PIM integration</label>
+            <tab>edg_pim_tab</tab>
+            <resource>Bold_PIM::system_config</resource>
+            <group id="settings" translate="label" sortOrder="1" type="text" showInDefault="1">
+                <label>Module Settings</label>
+                <field id="environment_tag" sortOrder="5" type="text" showInDefault="1">
+                    <label>PIM Environment tag</label>
+                </field>
+                <field id="order_export_enabled" sortOrder="10" type="select" showInDefault="1">
+                    <label>Enable UploadOrders (export)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="order_import_enabled" sortOrder="11" type="select" showInDefault="1">
+                    <label>Enable OrderStatus (import)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="order_import_status_after_shipping" sortOrder="12" type="select" showInDefault="1">
+                    <label>Order status after shipment</label>
+                    <comment>Order status that will be set after all order items have been shipped.</comment>
+                    <source_model>Bold\PIM\Model\SourceModel\System\Orderstatus</source_model>
+                </field>
+                <field id="order_import_send_email_after_shipping" sortOrder="15" type="select" showInDefault="1">
+                    <label>Send shipping confirmation email</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="stockmutations_import_enabled" sortOrder="15" type="select" showInDefault="1">
+                    <label>Enable Stockmutations v2 (import)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="stockmutations_import_strip_prefix" sortOrder="16" type="select" showInDefault="1">
+                    <label>Strip prefix on Stockmutations v2 (import)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="articleinfo_import_enabled" sortOrder="20" type="select" showInDefault="1">
+                    <label>Enable ArticleInfo (import)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sku_prefix" sortOrder="30" type="text" showInDefault="1">
+                    <label>SKU Prefix</label>
+                    <comment>Prefix that is being prefixed to SKU in cases of ArticleInfo soap calls.</comment>
+                </field>
+                <field id="export_order_type" sortOrder="40" type="text" showInDefault="1">
+                    <label>Export Order Type</label>
+                </field>
+                <field id="export_order_statuses" sortOrder="45" type="text" showInDefault="1">
+                    <label>Export Order Statuses</label>
+                    <comment>Format: order_status1:payment_status1,orderstatus2:payment_status2 (statuses separated by comma, status/payment by colon). In case payment status is omitted, no payment code check is being performed, so it matches all payment methods.</comment>
+                </field>
+                <field id="backorder_enabled" sortOrder="50" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable backorder notices</label>
+                    <comment>This enables the product backorder notifications</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="backorder_pdp" sortOrder="60" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show on product page</label>
+                    <comment>This enables the product backorder notification to be displayed on the product detail page</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="backorder_confirmation" sortOrder="70" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Show in order confirmation email</label>
+                    <comment>This enables the product backorder notification to be displayed on the order confirmation transactional email</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="backorder_text" sortOrder="80" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Backorder text</label>
+                    <comment>If no custom text is set for product in attribute backorder_text, this text is displayed</comment>
+                </field>
+                <field id="block_duplicate_sku" sortOrder="90" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Block Duplicate Sku in Quote</label>
+                    <comment>Prevent the customer from adding multiple configurations of the same composite product to his cart</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="duplicate_sku_error" sortOrder="100" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Duplicate Sku error message</label>
+                </field>
+                <field id="duplicate_sku_error_checkout" sortOrder="110" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Duplicate Sku error message checkout</label>
+                </field>
+            </group>
+            <group id="remote" type="text" showInDefault="1">
+                <label>Soap Server Settings</label>
+                <field id="login" sortOrder="10" type="text" showInDefault="1">
+                    <label>Username</label>
+                </field>
+                <field id="password" sortOrder="20" type="password" showInDefault="1">
+                    <label>Password</label>
+                </field>
+                <field id="uri" sortOrder="30" type="text" showInDefault="1">
+                    <label>WSDL</label>
+                </field>
+                <field id="location" sortOrder="35" type="text" showInDefault="1">
+                    <label>Location</label>
+                    <comment>Needed when WSDL contains internal address</comment>
+                </field>
+                <field id="soap_version" sortOrder="40" type="select" showInDefault="1">
+                    <label>Soap Version</label>
+                    <source_model>Bold\PIM\Model\SourceModel\System\SoapVersion</source_model>
+                </field>
+            </group>
+            <group id="logging" sortOrder="2" type="text" showInDefault="1">
+                <label>Logging Settings</label>
+                <field id="logging_debug_enabled" type="select" showInDefault="1">
+                    <label>Enable debug-level logging</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="erremail" sortOrder="10" type="text" showInDefault="1">
+                    <label>Exception warning email address</label>
+                </field>
+                <field id="enable_verbose_export" type="select" showInDefault="1">
+                    <label>Enable verbose logging for orderStatus</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_verbose_import" type="select" showInDefault="1">
+                    <label>Enable verbose logging for orderUpload</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_verbose_stock" type="select" showInDefault="1">
+                    <label>Enable verbose logging for stockMutations</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="library_log_enabled" type="select" showInDefault="1">
+                    <label>Enable logging in pim library</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="library_debug_enabled" type="select" showInDefault="1">
+                    <label>Enable debug-level logging for pim library</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends><field id="library_log_enabled">1</field></depends>
+                    <comment>if disabled, only exceptions will be logged</comment>
+                </field>
+            </group>
+            <group id="articleinfo" sortOrder="3" type="text" showInDefault="1">
+                <label>Articleinfo Synchronisation options</label>
+                <field id="sync_field_sku" sortOrder="10" type="select" showInDefault="1">
+                    <label>Sync SKU</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_field_name" sortOrder="20" type="select" showInDefault="1">
+                    <label>Sync Name</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_field_isbn" sortOrder="30" type="select" showInDefault="1">
+                    <label>Sync ISBN</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_field_weight" sortOrder="40" type="select" showInDefault="1">
+                    <label>Sync Weight</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_field_backorder_text" sortOrder="50" type="select" showInDefault="1">
+                    <label>Sync Backorder text</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_field_price" sortOrder="60" type="select" showInDefault="1">
+                    <label>Sync Price</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_pricetiers" sortOrder="70" type="select" showInDefault="1">
+                    <label>Sync Price Tiers</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_tax_classes" sortOrder="80" type="select" showInDefault="1">
+                    <label>Sync Tax Classes</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_stock" sortOrder="90" type="select" showInDefault="1">
+                    <label>Sync Stock Settings</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_product_status" sortOrder="100" type="select" showInDefault="1">
+                    <label>Sync Product Status</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="sync_field_articletype" sortOrder="110" type="select" showInDefault="1">
+                    <label>Sync ArticleType</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

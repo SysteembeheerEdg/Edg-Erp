@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * crontab.xml
+ *
+ * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
+ * @author    dev@boldcommerce.nl
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <job name="bold_pim_orderpush" instance="Bold\PIM\Cron\API\OrderExport" method="execute">
+            <schedule>*/10 * * * *</schedule>
+        </job>
+        <job name="bold_pim_orderpull" instance="Bold\PIM\Cron\API\OrderStatusImport" method="execute">
+            <schedule>*/10 * * * *</schedule>
+        </job>
+        <job name="bold_pim_stockpull" instance="Bold\PIM\Cron\API\StockMutations" method="execute">
+            <schedule>*/15 * * * *</schedule>
+        </job>
+    </group>
+    <group id="article_sync">
+        <job name="bold_pim_articleinfo" instance="Bold\PIM\Cron\API\ArticleInfo" method="execute">
+            <schedule>0 0 * * *</schedule>
+        </job>
+    </group>
+</config>

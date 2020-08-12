@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * di.xml
+ *
+ * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
+ * @author    dev@boldcommerce.nl
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="Magento\Sales\Model\ResourceModel\Order\Grid">
+        <arguments>
+            <argument name="columns" xsi:type="array">
+                <item name="pim_is_exported" xsi:type="string">sales_order.pim_is_exported</item>
+                <item name="pim_exported_at" xsi:type="string">sales_order.pim_exported_at</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="\Magento\Shipping\Helper\Data">
+        <plugin name="modifyTrackUrlToPostNL" type="Bold\PIM\Plugin\Helper\Shipping\Data" />
+    </type>
+</config>

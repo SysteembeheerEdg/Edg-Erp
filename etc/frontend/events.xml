@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="sales_quote_product_add_after">
+        <observer name="bold_pim_prevent_duplicate_sku" instance="Bold\PIM\Observer\Frontend\PreventDuplicateSkuInQuote"/>
+    </event>
+    <event name="controller_action_predispatch_checkout_onepage_index">
+        <observer name="bold_pim_prevent_duplicate_sku" instance="Bold\PIM\Observer\Frontend\PreventDuplicateSkuInCheckout"/>
+    </event>
+</config>

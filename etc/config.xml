@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <bold_orderexim>
+            <remote>
+                <!--<soap_version>1</soap_version>-->
+                <!--<login>Magento</login>-->
+                <!--<password>vv3b53rv1c3!</password>-->
+                <!--<uri>http://188.201.92.66:8090/wsa/wsaedg/wsdl?targetURI=urn:edg:wsaedg</uri>-->
+            </remote>
+            <settings>
+                <export_order_type>magento_order</export_order_type>
+                <environment_tag/>
+                <logging_debug_enabled>0</logging_debug_enabled>
+                <!-- articleinfo call settings -->
+                <!-- by default, disable all syncs -->
+                <articleinfo_import_enabled>0</articleinfo_import_enabled>
+                <stockmutations_enabled>0</stockmutations_enabled>
+                <stockmutations_import_enabled>0</stockmutations_import_enabled>
+                <stockmutations_import_strip_prefix>0</stockmutations_import_strip_prefix>
+                <order_export_enabled>0</order_export_enabled>
+                <order_import_enabled>0</order_import_enabled>
+                <order_import_status_after_shipping>complete</order_import_status_after_shipping>
+                <order_import_send_email_after_shipping>0</order_import_send_email_after_shipping>
+                <export_order_statuses>processed_ogone</export_order_statuses>
+            </settings>
+            <articleinfo>
+                <sync_field_sku>1</sync_field_sku>
+                <sync_field_articlenumber>1</sync_field_articlenumber>
+                <sync_field_isbn>1</sync_field_isbn>
+                <sync_field_weight>1</sync_field_weight>
+                <sync_field_backorder_text>1</sync_field_backorder_text>
+                <sync_field_price>1</sync_field_price>
+                <sync_field_name>1</sync_field_name>
+                <sync_field_articletype>1</sync_field_articletype>
+                <sync_pricetiers>1</sync_pricetiers>
+                <sync_tax_classes>1</sync_tax_classes>
+                <sync_stock>1</sync_stock>
+                <sync_product_status>1</sync_product_status>
+            </articleinfo>
+        </bold_orderexim>
+    </default>
+</config>

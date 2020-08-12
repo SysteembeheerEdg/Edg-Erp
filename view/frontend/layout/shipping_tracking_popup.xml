@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * shipping_tracking_popup.xml
+ *
+ * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
+ * @author    dev@boldcommerce.nl
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="shipping.tracking.popup">
+            <action method="setTemplate">
+                <argument name="template" xsi:type="string">Bold_PIM::shipping/tracking/popup.phtml</argument>
+            </action>
+        </referenceBlock>
+    </body>
+</page>
