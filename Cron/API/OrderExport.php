@@ -1,12 +1,6 @@
 <?php
-/**
- * OrderExport
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Cron\API;
+namespace Edg\Erp\Cron\API;
 
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -26,15 +20,15 @@ class OrderExport extends AbstractCron
     protected $articleTypeHelper;
 
     public function __construct(
-        \Bold\PIM\Helper\Data $helper,
+        \Edg\Erp\Helper\Data $helper,
         DirectoryList $directoryList,
         ConfigInterface $config,
         Message $message,
         \Magento\Store\Model\StoreManager $storeManager,
         \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Bold\PIM\Model\Convert\OrderToDataModel $orderConverter,
+        \Edg\Erp\Model\Convert\OrderToDataModel $orderConverter,
         \Magento\Sales\Model\OrderRepository $orderRepository,
-        \Bold\PIM\Helper\ArticleType $articleTypeHelper,
+        \Edg\Erp\Helper\ArticleType $articleTypeHelper,
         array $settings = []
     ) {
         $this->orderFactory = $orderFactory;

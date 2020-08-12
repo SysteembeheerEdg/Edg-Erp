@@ -1,12 +1,6 @@
 <?php
-/**
- * Debug
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Logger\Handler;
+namespace Edg\Erp\Logger\Handler;
 
 use Monolog\Logger;
 

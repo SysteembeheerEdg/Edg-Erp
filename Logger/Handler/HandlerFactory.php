@@ -1,14 +1,8 @@
 <?php
-/**
- * HandlerFactory
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Logger\Handler;
+namespace Edg\Erp\Logger\Handler;
 
-use Bold\PIM\Logger\Handler\HandlerAbstract as ObjectType;
+use Edg\Erp\Logger\Handler\HandlerAbstract as ObjectType;
 use InvalidArgumentException;
 use Magento\Framework\ObjectManagerInterface;
 
@@ -27,9 +21,9 @@ class HandlerFactory
      * @var string
      */
     protected $instanceTypeNames = [
-        'error' => '\\Bold\\PIM\\Logger\\Handler\\Error',
-        'info' => '\\Bold\\PIM\\Logger\\Handler\\Info',
-        'debug' => '\\Bold\\PIM\\Logger\\Handler\\Debug',
+        'error' => '\\Edg\\Erp\\Logger\\Handler\\Error',
+        'info' => '\\Edg\\Erp\\Logger\\Handler\\Info',
+        'debug' => '\\Edg\\Erp\\Logger\\Handler\\Debug',
     ];
 
     /**
@@ -57,7 +51,7 @@ class HandlerFactory
 
         $resultInstance = $this->objectManager->create($this->instanceTypeNames[$type], $data);
         if (!$resultInstance instanceof ObjectType) {
-            throw new InvalidArgumentException(get_class($resultInstance) . ' isn\'t instance of \Bold\PIM\Logger\Handler\HandlerAbstract');
+            throw new InvalidArgumentException(get_class($resultInstance) . ' isn\'t instance of \Edg\Erp\Logger\Handler\HandlerAbstract');
         }
 
         return $resultInstance;

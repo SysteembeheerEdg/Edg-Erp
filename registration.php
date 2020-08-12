@@ -1,6 +1,6 @@
 <?php
     \Magento\Framework\Component\ComponentRegistrar::register(
         \Magento\Framework\Component\ComponentRegistrar::MODULE,
-        'Bold_PIM',
+        'Edg_Erp',
         __DIR__
     );

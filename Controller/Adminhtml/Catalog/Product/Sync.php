@@ -2,17 +2,10 @@
 
 declare(strict_types = 1);
 
-/**
- * Sync
- *
- * @copyright Copyright © 2018 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
-
-namespace Bold\PIM\Controller\Adminhtml\Catalog\Product;
+namespace Edg\Erp\Controller\Adminhtml\Catalog\Product;
 
 use Magento\Backend\App\Action;
-use Bold\PIM\Cron\API\ArticleInfo;
+use Edg\Erp\Cron\API\ArticleInfo;
 use Magento\Catalog\Model\ProductFactory;
 
 class Sync extends Action

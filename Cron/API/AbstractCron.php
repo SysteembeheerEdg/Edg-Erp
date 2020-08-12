@@ -1,12 +1,6 @@
 <?php
-/**
- * AbstractCron
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Cron\API;
+namespace Edg\Erp\Cron\API;
 
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -33,7 +27,7 @@ abstract class AbstractCron
     protected $zendLogger;
 
     /**
-     * @var \Bold\PIM\Helper\Data
+     * @var \Edg\Erp\Helper\Data
      */
     protected $helper;
 
@@ -65,7 +59,7 @@ abstract class AbstractCron
     protected $_logOutputEnabled = false;
 
     public function __construct(
-        \Bold\PIM\Helper\Data $helper,
+        \Edg\Erp\Helper\Data $helper,
         DirectoryList $directoryList,
         ConfigInterface $config,
         Message $message,
@@ -91,7 +85,7 @@ abstract class AbstractCron
     protected function initDefaultSettings($settings)
     {
         return array_merge([
-            'force_order_upload' => false/** @see \Bold\PIM\Cron\API\OrderExport */,
+            'force_order_upload' => false/** @see \Edg\Erp\Cron\API\OrderExport */,
             'id_prefix' => null,
             'order_id' => null
         ], $settings);

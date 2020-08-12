@@ -1,12 +1,6 @@
 <?php
-/**
- * Tracking
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Plugin\Block\Admin\Shipping;
+namespace Edg\Erp\Plugin\Block\Admin\Shipping;
 
 
 class Tracking

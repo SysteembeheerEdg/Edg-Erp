@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-/**
- * catalog_product_edit.xml
- *
- * @copyright Copyright © 2018 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
--->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="after.body.start">
-            <block name="bold.pim.script" class="Magento\Backend\Block\Template" template="Bold_PIM::product/script.phtml" />
+            <block name="bold.pim.script" class="Magento\Backend\Block\Template" template="Edg_Erp::product/script.phtml" />
         </referenceContainer>
     </body>
 </page>

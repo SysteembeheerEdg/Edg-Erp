@@ -4,7 +4,7 @@
  * See COPYING.txt for license details.
  */
 
-use Bold\PIM\Model\SourceModel\Eav\ArticleType;
+use Edg\Erp\Model\SourceModel\Eav\ArticleType;
 
 \Magento\TestFramework\Helper\Bootstrap::getInstance()->reinitialize();
 

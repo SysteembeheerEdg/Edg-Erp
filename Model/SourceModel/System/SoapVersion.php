@@ -1,12 +1,6 @@
 <?php
-/**
- * SoapVersion
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Model\SourceModel\System;
+namespace Edg\Erp\Model\SourceModel\System;
 
 use Magento\Framework\Data\OptionSourceInterface;
 use Magento\Framework\Option\ArrayInterface;

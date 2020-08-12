@@ -1,8 +1,8 @@
 {
-  "name": "boldcommerce/magento2-pim-koppeling-edg",
-  "description": "Magento 2 PIM integration",
+  "name": "edg/module-erp-koppeling",
+  "description": "EDG ERP Magento 2 integration",
   "require": {
-    "php": "~5.6.0|~7.0.0|~7.1.0",
+    "php": "~5.6.0|~7.0.0|~7.1.0|~7.2.0",
     "boldcommerce/pim-api-service-edg": "*",
     "magento/magento2-base": "^2.1.9"
   },
@@ -15,7 +15,7 @@
       "registration.php"
     ],
     "psr-4": {
-      "Bold\\PIM\\": ""
+      "Edg\\Erp\\": ""
     }
   }
 }

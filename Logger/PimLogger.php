@@ -1,14 +1,8 @@
 <?php
-/**
- * PimLogger
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Logger;
+namespace Edg\Erp\Logger;
 
-use Bold\PIM\Logger\Handler\HandlerFactory;
+use Edg\Erp\Logger\Handler\HandlerFactory;
 use Monolog\Logger;
 
 class PimLogger extends Logger

@@ -1,6 +1,6 @@
-# Bold PIM
+# EDG ERP
 
-Bold PIM Module for Magento 2.
+EDG ERP Module for Magento 2.
 
  - [Description](#markdown-header-description)
  - [How to use](#markdown-header-how-to-use)

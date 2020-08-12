@@ -1,12 +1,6 @@
 <?php
-/**
- * Data
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Helper;
+namespace Edg\Erp\Helper;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -40,7 +34,7 @@ class Data extends AbstractHelper
         ProductRepositoryInterface $productRepository,
         SearchCriteriaBuilder $criteriaBuilder,
         Calculation $taxCalculation,
-        \Bold\PIM\Logger\PimLogger $logger
+        \Edg\Erp\Logger\PimLogger $logger
     ) {
         parent::__construct($context);
         $this->productRepository = $productRepository;
@@ -400,9 +394,9 @@ class Data extends AbstractHelper
     }
 
     /**
-     * retrieve PIM logger
+     * retrieve Edg Erp logger
      *
-     * @return \Bold\PIM\Logger\PimLogger
+     * @return \Edg\Erp\Logger\PimLogger
      */
     public function getPimLogger()
     {

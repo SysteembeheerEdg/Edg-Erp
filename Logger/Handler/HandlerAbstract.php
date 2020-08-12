@@ -1,12 +1,6 @@
 <?php
-/**
- * HandlerAbstract
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Logger\Handler;
+namespace Edg\Erp\Logger\Handler;
 
 use Magento\Framework\Filesystem\DriverInterface;
 use Magento\Framework\Logger\Handler\Base;

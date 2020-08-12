@@ -1,13 +1,6 @@
 <?php
-/**
- * ArticleType
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Helper;
-
+namespace Edg\Erp\Helper;
 
 use Magento\Catalog\Model\Product;
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -26,7 +19,7 @@ class ArticleType extends AbstractHelper
 
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
-        \Bold\PIM\Model\SourceModel\Eav\ArticleType $articleType,
+        \Edg\Erp\Model\SourceModel\Eav\ArticleType $articleType,
         \Magento\Sales\Model\Order\ShipmentFactory $shipmentFactory,
         \Magento\Framework\DB\Transaction $transaction
     ) {

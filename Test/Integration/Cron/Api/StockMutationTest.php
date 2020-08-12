@@ -1,19 +1,13 @@
 <?php
-/**
- * StockMutationTest
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Test\Integration\Cron\Api;
+namespace Edg\Erp\Test\Integration\Cron\Api;
 
 
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class StockMutationTest
- * @package Bold\PIM\Test\Integration\Cron\Api
+ * @package Edg\Erp\Test\Integration\Cron\Api
  *
  * @magentoDbIsolation enabled
  */
@@ -56,7 +50,7 @@ class StockMutationTest extends \PHPUnit_Framework_TestCase
             ->willReturnOnConsecutiveCalls($result, $result2, $result3);
 
 
-        $helper = $this->getMockBuilder('\Bold\PIM\Helper\Data')
+        $helper = $this->getMockBuilder('\Edg\Erp\Helper\Data')
             ->disableOriginalConstructor()
             ->setMethods([])
             ->getMock();
@@ -73,8 +67,8 @@ class StockMutationTest extends \PHPUnit_Framework_TestCase
             ->method('getEnvironmentTag')
             ->willReturn('dummy');
 
-        /** @var \Bold\PIM\Cron\API\StockMutations $subject */
-        $subject = $objectManager->create('\Bold\PIM\Cron\API\StockMutations',
+        /** @var \Edg\Erp\Cron\API\StockMutations $subject */
+        $subject = $objectManager->create('\Edg\Erp\Cron\API\StockMutations',
             [
                 'helper' => $helper
             ]

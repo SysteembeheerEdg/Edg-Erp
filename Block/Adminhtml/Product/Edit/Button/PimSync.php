@@ -2,14 +2,7 @@
 
 declare(strict_types = 1);
 
-/**
- * PimSync
- *
- * @copyright Copyright © 2018 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
-
-namespace Bold\PIM\Block\Adminhtml\Product\Edit\Button;
+namespace Edg\Erp\Block\Adminhtml\Product\Edit\Button;
 
 use Magento\Catalog\Block\Adminhtml\Product\Edit\Button\Generic;
 

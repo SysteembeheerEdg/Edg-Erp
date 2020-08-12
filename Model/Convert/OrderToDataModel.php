@@ -1,12 +1,6 @@
 <?php
-/**
- * OrderToDataModel
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Model\Convert;
+namespace Edg\Erp\Model\Convert;
 
 use Magento\Store\Model\ScopeInterface;
 
