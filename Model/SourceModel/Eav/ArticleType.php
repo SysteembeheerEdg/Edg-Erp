@@ -1,5 +1,5 @@
 <?php
-namespace Bold\PIM\Model\SourceModel\Eav;
+namespace Edg\Erp\Model\SourceModel\Eav;
 
 use Magento\Eav\Model\Entity\Attribute\Source\AbstractSource;
 

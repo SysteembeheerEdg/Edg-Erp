@@ -1,18 +1,12 @@
 <?php
-/**
- * OrderImport
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Test\Integration\Cron\Api;
+namespace Edg\Erp\Test\Integration\Cron\Api;
 
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class OrderImportTest
- * @package Bold\PIM\Test\Integration\Cron\Api
+ * @package Edg\Erp\Test\Integration\Cron\Api
  *
  * @magentoDbIsolation enabled
  */
@@ -29,7 +23,7 @@ class OrderImportTest extends \PHPUnit_Framework_TestCase
     protected $soap;
 
     /**
-     * @var \Bold\PIM\Cron\API\OrderStatusImport
+     * @var \Edg\Erp\Cron\API\OrderStatusImport
      */
     protected $subject;
 
@@ -142,7 +136,7 @@ class OrderImportTest extends \PHPUnit_Framework_TestCase
         $this->soap = $soapMock;
         $this->objectManager = Bootstrap::getObjectManager();
 
-        $helper = $this->getMockBuilder('\Bold\PIM\Helper\Data')
+        $helper = $this->getMockBuilder('\Edg\Erp\Helper\Data')
             ->setMethods(['getSoapClient'])
             ->setConstructorArgs(
                 [
@@ -150,7 +144,7 @@ class OrderImportTest extends \PHPUnit_Framework_TestCase
                     'productRepository' => $this->objectManager->get('\Magento\Catalog\Api\ProductRepositoryInterface'),
                     'criteriaBuilder' => $this->objectManager->get('\Magento\Framework\Api\SearchCriteriaBuilder'),
                     'taxCalculation' => $this->objectManager->get('\Magento\Tax\Model\Calculation'),
-                    'logger' => $this->objectManager->get('\Bold\PIM\Logger\PimLogger')
+                    'logger' => $this->objectManager->get('\Edg\Erp\Logger\PimLogger')
                 ]
             )
             ->getMock();
@@ -165,8 +159,8 @@ class OrderImportTest extends \PHPUnit_Framework_TestCase
             ->getMock();
 
 
-        /** @var \Bold\PIM\Cron\API\StockMutations $subject */
-        $this->subject = $this->objectManager->create('\Bold\PIM\Cron\API\OrderStatusImport',
+        /** @var \Edg\Erp\Cron\API\StockMutations $subject */
+        $this->subject = $this->objectManager->create('\Edg\Erp\Cron\API\OrderStatusImport',
             [
                 'helper' => $helper,
                 'sender' => $this->mailSender

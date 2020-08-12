@@ -1,13 +1,6 @@
 <?php
-/**
- * StockMutations
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Cron\API;
-
+namespace Edg\Erp\Cron\API;
 
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -22,7 +15,7 @@ class StockMutations extends AbstractCron
     protected $stockregistry;
 
     public function __construct(
-        \Bold\PIM\Helper\Data $helper,
+        \Edg\Erp\Helper\Data $helper,
         DirectoryList $directoryList,
         ConfigInterface $config,
         Message $message,

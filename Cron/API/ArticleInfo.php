@@ -1,12 +1,6 @@
 <?php
-/**
- * ArticleInfo
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Cron\API;
+namespace Edg\Erp\Cron\API;
 
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
@@ -51,7 +45,7 @@ class ArticleInfo extends AbstractCron
     protected $apiMessages = [];
 
     public function __construct(
-        \Bold\PIM\Helper\Data $helper,
+        \Edg\Erp\Helper\Data $helper,
         DirectoryList $directoryList,
         ConfigInterface $config,
         Message $message,

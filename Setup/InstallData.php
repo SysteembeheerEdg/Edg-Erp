@@ -1,12 +1,6 @@
 <?php
-/**
- * InstallData
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Setup;
+namespace Edg\Erp\Setup;
 
 use Magento\Eav\Setup\EavSetup;
 use Magento\Eav\Setup\EavSetupFactory;
@@ -79,7 +73,7 @@ class InstallData implements InstallDataInterface
                 'type' => 'int',
                 'label' => 'Bold PIM ArticleType',
                 'input' => 'select',
-                'source' => 'Bold\PIM\Model\SourceModel\Eav\ArticleType',
+                'source' => 'Edg\Erp\Model\SourceModel\Eav\ArticleType',
                 'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
                 'visible' => true,
                 'required' => false,

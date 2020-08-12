@@ -22,10 +22,10 @@
         <?php foreach ($_shipment->getAllTracks() as $_item): ?>
             <tr>
                 <td><?= $block->escapeHtml($_item->getTitle()) ?>:</td>
-                <?php if($this->helper(\Bold\PIM\Helper\Tracktrace::class)->isPostNL($_item)): ?>
+                <?php if($this->helper(\Edg\Erp\Helper\Tracktrace::class)->isPostNL($_item)): ?>
                     <?php $postcode = $_shipment->getShippingAddress()->getPostcode(); ?>
                     <td>
-                        <a target="_blank" href="<?php echo $this->helper(\Bold\PIM\Helper\Tracktrace::class)->getPostNLUrl($_item->getNumber(), $postcode) ?>">
+                        <a target="_blank" href="<?php echo $this->helper(\Edg\Erp\Helper\Tracktrace::class)->getPostNLUrl($_item->getNumber(), $postcode) ?>">
                             <?php echo $block->escapeHtml($_item->getNumber()) ?>
                         </a>
                     </td>

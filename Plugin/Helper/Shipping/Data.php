@@ -1,12 +1,6 @@
 <?php
-/**
- * Data
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Plugin\Helper\Shipping;
+namespace Edg\Erp\Plugin\Helper\Shipping;
 
 
 class Data
@@ -14,7 +8,7 @@ class Data
     protected $helper;
     
     public function __construct(
-        \Bold\PIM\Helper\Tracktrace $helper
+        \Edg\Erp\Helper\Tracktrace $helper
     )
     {
         $this->helper = $helper;    

@@ -25,7 +25,7 @@ $results = $block->getTrackingInfo();
                         $block->addChild('shipping.tracking.details.' . $counter, Template::class, [
                                 'track' => $track,
                                 'shipment_number' => $shipId,
-                                'template' => 'Bold_PIM::shipping/tracking/details.phtml',
+                                'template' => 'Edg_Erp::shipping/tracking/details.phtml',
                                 'storeSupportEmail' => $block->getStoreSupportEmail()
                             ]
                         );

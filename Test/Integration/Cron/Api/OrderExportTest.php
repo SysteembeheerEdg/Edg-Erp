@@ -1,18 +1,12 @@
 <?php
-/**
- * OrderExportTest
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Test\Integration\Cron\Api;
+namespace Edg\Erp\Test\Integration\Cron\Api;
 
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class OrderExportTest
- * @package Bold\PIM\Test\Integration\Cron\Api
+ * @package Edg\Erp\Test\Integration\Cron\Api
  *
  * @magentoDbIsolation enabled
  */
@@ -40,7 +34,7 @@ class OrderExportTest extends \PHPUnit_Framework_TestCase
         $client = new \Bold\PIMService\Client();
         $client->setSoapClient($soapMock);
 
-        $helper = $this->getMockBuilder('\Bold\PIM\Helper\Data')
+        $helper = $this->getMockBuilder('\Edg\Erp\Helper\Data')
             ->setMethods(['getSoapClient'])
             ->setConstructorArgs(
                 [
@@ -48,7 +42,7 @@ class OrderExportTest extends \PHPUnit_Framework_TestCase
                     'productRepository' => $this->objectManager->get('\Magento\Catalog\Api\ProductRepositoryInterface'),
                     'criteriaBuilder' => $this->objectManager->get('\Magento\Framework\Api\SearchCriteriaBuilder'),
                     'taxCalculation' => $this->objectManager->get('\Magento\Tax\Model\Calculation'),
-                    'logger' => $this->objectManager->get('\Bold\PIM\Logger\PimLogger')
+                    'logger' => $this->objectManager->get('\Edg\Erp\Logger\PimLogger')
                 ]
             )
             ->getMock();
@@ -78,8 +72,8 @@ class OrderExportTest extends \PHPUnit_Framework_TestCase
                 return true;
             }));
 
-        /** @var \Bold\PIM\Cron\API\OrderExport $subject */
-        $subject = $this->objectManager->create('\Bold\PIM\Cron\API\OrderExport',
+        /** @var \Edg\Erp\Cron\API\OrderExport $subject */
+        $subject = $this->objectManager->create('\Edg\Erp\Cron\API\OrderExport',
             [
                 'helper' => $helper
             ]

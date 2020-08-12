@@ -1,12 +1,6 @@
 <?php
-/**
- * PreventDuplicateSkuInCheckout
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
 
-namespace Bold\PIM\Observer\Frontend;
+namespace Edg\Erp\Observer\Frontend;
 
 
 use Magento\Framework\Event\ObserverInterface;

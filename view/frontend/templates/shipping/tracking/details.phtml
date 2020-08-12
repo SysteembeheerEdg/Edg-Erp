@@ -90,10 +90,10 @@ $idSuffix = is_object($track) ? $track->getTracking() : $track['number'];
             <th class="col label" scope="row">
                 <?php echo($track['title'] ? $block->escapeHtml($track['title']) : $block->escapeHtml(__('N/A'))); ?>:
             </th>
-            <?php if($this->helper(\Bold\PIM\Helper\Tracktrace::class)->isPostNL($track)): ?>
-                <?php $postcode = $this->helper(\Bold\PIM\Helper\Tracktrace::class)->getPostCodeByShipmentIncrement($block->getData('shipment_number')); ?>
+            <?php if($this->helper(\Edg\Erp\Helper\Tracktrace::class)->isPostNL($track)): ?>
+                <?php $postcode = $this->helper(\Edg\Erp\Helper\Tracktrace::class)->getPostCodeByShipmentIncrement($block->getData('shipment_number')); ?>
                 <td class="col value">
-                    <a target="_blank" href="<?php echo $this->helper(\Bold\PIM\Helper\Tracktrace::class)->getPostNLUrl($track['number'], $postcode) ?>">
+                    <a target="_blank" href="<?php echo $this->helper(\Edg\Erp\Helper\Tracktrace::class)->getPostNLUrl($track['number'], $postcode) ?>">
                         <?php echo $block->escapeHtml($track['number']) ?>
                     </a>
                 </td>

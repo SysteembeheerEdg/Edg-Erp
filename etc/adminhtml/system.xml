@@ -1,12 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-/**
- * system.xml
- *
- * @copyright Copyright © 2017 Bold Commerce BV. All rights reserved.
- * @author    dev@boldcommerce.nl
- */
--->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
         <tab id="edg_pim_tab" translate="label" sortOrder="1">
@@ -15,7 +7,7 @@
         <section id="bold_orderexim" translate="label" type="text" showInDefault="1">
             <label>Bold PIM integration</label>
             <tab>edg_pim_tab</tab>
-            <resource>Bold_PIM::system_config</resource>
+            <resource>Edg_Erp::system_config</resource>
             <group id="settings" translate="label" sortOrder="1" type="text" showInDefault="1">
                 <label>Module Settings</label>
                 <field id="environment_tag" sortOrder="5" type="text" showInDefault="1">
@@ -32,7 +24,7 @@
                 <field id="order_import_status_after_shipping" sortOrder="12" type="select" showInDefault="1">
                     <label>Order status after shipment</label>
                     <comment>Order status that will be set after all order items have been shipped.</comment>
-                    <source_model>Bold\PIM\Model\SourceModel\System\Orderstatus</source_model>
+                    <source_model>Edg\Erp\Model\SourceModel\System\Orderstatus</source_model>
                 </field>
                 <field id="order_import_send_email_after_shipping" sortOrder="15" type="select" showInDefault="1">
                     <label>Send shipping confirmation email</label>
@@ -109,7 +101,7 @@
                 </field>
                 <field id="soap_version" sortOrder="40" type="select" showInDefault="1">
                     <label>Soap Version</label>
-                    <source_model>Bold\PIM\Model\SourceModel\System\SoapVersion</source_model>
+                    <source_model>Edg\Erp\Model\SourceModel\System\SoapVersion</source_model>
                 </field>
             </group>
             <group id="logging" sortOrder="2" type="text" showInDefault="1">

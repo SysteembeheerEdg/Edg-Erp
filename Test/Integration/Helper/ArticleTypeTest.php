@@ -1,11 +1,11 @@
 <?php
-namespace Bold\PIM\Test\Integration\Helper;
+namespace Edg\Erp\Test\Integration\Helper;
 
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class ArticleType
- * @package Bold\PIM\Test\Integration\Helper
+ * @package Edg\Erp\Test\Integration\Helper
  *
  * @magentoDbIsolation enabled
  *
@@ -38,8 +38,8 @@ class ArticleTypeTest extends \PHPUnit_Framework_TestCase
         $order = $objectManager->create('\Magento\Sales\Model\Order');
         $order->loadByIncrementId('100000001');
 
-        /** @var \Bold\PIM\Helper\ArticleType $testobject */
-        $testobject = $objectManager->create('\Bold\PIM\Helper\ArticleType');
+        /** @var \Edg\Erp\Helper\ArticleType $testobject */
+        $testobject = $objectManager->create('\Edg\Erp\Helper\ArticleType');
 
         $result = $testobject->autoshipNonShippableItemsByOrder($order);
 
@@ -59,8 +59,8 @@ class ArticleTypeTest extends \PHPUnit_Framework_TestCase
         $order = $objectManager->create('\Magento\Sales\Model\Order');
         $order->loadByIncrementId('100000001');
 
-        /** @var \Bold\PIM\Helper\ArticleType $testobject */
-        $testobject = $objectManager->create('\Bold\PIM\Helper\ArticleType');
+        /** @var \Edg\Erp\Helper\ArticleType $testobject */
+        $testobject = $objectManager->create('\Edg\Erp\Helper\ArticleType');
 
         $result = $testobject->autoshipNonShippableItemsByOrder($order);
 
@@ -80,8 +80,8 @@ class ArticleTypeTest extends \PHPUnit_Framework_TestCase
         $order = $objectManager->create('\Magento\Sales\Model\Order');
         $order->loadByIncrementId('100000001');
 
-        /** @var \Bold\PIM\Helper\ArticleType $testobject */
-        $testobject = $objectManager->create('\Bold\PIM\Helper\ArticleType');
+        /** @var \Edg\Erp\Helper\ArticleType $testobject */
+        $testobject = $objectManager->create('\Edg\Erp\Helper\ArticleType');
 
         $result = $testobject->autoshipNonShippableItemsByOrder($order);
 
