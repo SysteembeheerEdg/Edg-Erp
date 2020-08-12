@@ -128,7 +128,7 @@ class ArticleInfo extends AbstractCron
         return $messages;
     }
 
-    protected function processProduct(\Bold\PIMService\DataModel\ArticleInfo $article)
+    protected function processProduct(\Edg\ErpService\DataModel\ArticleInfo $article)
     {
         $mapping = $this->helper->getPimFieldMapping();
 
@@ -199,10 +199,10 @@ class ArticleInfo extends AbstractCron
      * Updates Product status (enabled, disabled)
      *
      * @param ProductInterface $product
-     * @param \Bold\PIMService\DataModel\ArticleInfo $article
+     * @param \Edg\ErpService\DataModel\ArticleInfo $article
      * @return $this
      */
-    protected function updateProductStatus(ProductInterface $product, \Bold\PIMService\DataModel\ArticleInfo $article)
+    protected function updateProductStatus(ProductInterface $product, \Edg\ErpService\DataModel\ArticleInfo $article)
     {
         $orderable = $article->getOrderable();
 
@@ -236,18 +236,18 @@ class ArticleInfo extends AbstractCron
      * Update stock settings for product based on articleResponse info xml
      *
      * @param ProductInterface $product
-     * @param \Bold\PIMService\DataModel\ArticleInfo $article
+     * @param \Edg\ErpService\DataModel\ArticleInfo $article
      * @return $this
      */
     protected function updateProductStockSettings(
         ProductInterface $product,
-        \Bold\PIMService\DataModel\ArticleInfo $article
+        \Edg\ErpService\DataModel\ArticleInfo $article
     ) {
         $stock = $this->stockRegistry->getStockItem($product->getId());
         if ($stock->getItemId()) {
             $sku = $product->getSku();
             $newQty = $article->getAvailable();
-            $newBackorders = ($article->getBackorder() == \Bold\PIMService\DataModel\ArticleInfo::BACKORDER_TRUE) ? 1 : 0;
+            $newBackorders = ($article->getBackorder() == \Edg\ErpService\DataModel\ArticleInfo::BACKORDER_TRUE) ? 1 : 0;
             $oldBackorders = $stock->getBackorders();
 
             $inStock = ($newQty > 0 || $newBackorders == 1) ? 1 : 0;
@@ -295,14 +295,14 @@ class ArticleInfo extends AbstractCron
 
     /**
      * @param ProductInterface $product
-     * @param \Bold\PIMService\DataModel\ArticleInfo $article
+     * @param \Edg\ErpService\DataModel\ArticleInfo $article
      * @return $this|bool
      * @throws \Magento\Framework\Exception\CouldNotSaveException
      * @throws \Magento\Framework\Exception\InputException
      */
     protected function updateProductPriceTiers(
         ProductInterface $product,
-        \Bold\PIMService\DataModel\ArticleInfo $article
+        \Edg\ErpService\DataModel\ArticleInfo $article
     ) {
 
         if ($product->getTypeId() == 'bundle') {
@@ -368,7 +368,7 @@ class ArticleInfo extends AbstractCron
         return $this;
     }
 
-    protected function updateProductTaxClass(ProductInterface $product, \Bold\PIMService\DataModel\ArticleInfo $article)
+    protected function updateProductTaxClass(ProductInterface $product, \Edg\ErpService\DataModel\ArticleInfo $article)
     {
 
         $map = $this->helper->getTaxClassMapping();

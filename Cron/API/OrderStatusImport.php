@@ -72,7 +72,7 @@ class OrderStatusImport extends AbstractCron
                         continue;
                     }
 
-                    if ($order->getOrderStatus() == \Bold\PIMService\DataModel\OrderStatus::STATUS_NOT_SHIPPED) {
+                    if ($order->getOrderStatus() == \Edg\ErpService\DataModel\OrderStatus::STATUS_NOT_SHIPPED) {
                         $this->serviceLog("Order " . $orderIncrementId . " is not shipped, no need to update \n");
                         continue;
                     }
@@ -163,12 +163,12 @@ class OrderStatusImport extends AbstractCron
 
     /**
      * @param \Magento\Sales\Model\Order $magentoOrder
-     * @param \Bold\PIMService\DataModel\OrderStatus $importData
+     * @param \Edg\ErpService\DataModel\OrderStatus $importData
      * @return array
      */
     protected function getItemsToShip(
         \Magento\Sales\Model\Order $magentoOrder,
-        \Bold\PIMService\DataModel\OrderStatus $importData
+        \Edg\ErpService\DataModel\OrderStatus $importData
     ) {
         $items = [];
 

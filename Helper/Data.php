@@ -298,7 +298,7 @@ class Data extends AbstractHelper
     /**
      * Retrieve new PIM soap client instance
      *
-     * @return \Bold\PIMService\Client
+     * @return \Edg\ErpService\Client
      */
     public function getSoapClient()
     {
@@ -319,7 +319,7 @@ class Data extends AbstractHelper
             $settings['location'] = $location;
         }
 
-        $client = new \Bold\PIMService\Client($this->getWsAddress(), $settings);
+        $client = new \Edg\ErpService\Client($this->getWsAddress(), $settings);
 
         if ($this->getLogLibraryEnabled()) {
             $debug = $this->getLogLibraryDebugMode() ? true : false;

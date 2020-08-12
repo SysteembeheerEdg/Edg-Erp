@@ -27,7 +27,7 @@ class StockMutationTest extends \PHPUnit_Framework_TestCase
         $objectManager = Bootstrap::getObjectManager();
 
         $soapMock = $this->getMockFromWsdl(BP . '/vendor/boldcommerce/pim-api-service-edg/tests/_files/edg.wsdl');
-        $client = new \Bold\PIMService\Client();
+        $client = new \Edg\ErpService\Client();
         $client->setSoapClient($soapMock);
 
         $result = new \stdClass;
@@ -41,7 +41,7 @@ class StockMutationTest extends \PHPUnit_Framework_TestCase
         $result2->v_stockmutations = "<articles><environment>dummy</environment><article><sku>simple-2</sku><stock>2</stock></article><article><sku>simple-4</sku><stock>4</stock></article></articles>";
 
         $result3 = new \stdClass;
-        $result3->v_status = \Bold\PIMService\Sync\Pull\StockMutations::NO_MUTATIONS;
+        $result3->v_status = \Edg\ErpService\Sync\Pull\StockMutations::NO_MUTATIONS;
         $result3->result = null;
         $result3->v_stockmutations = "";
 

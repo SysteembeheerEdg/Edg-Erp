@@ -31,7 +31,7 @@ class OrderExportTest extends \PHPUnit_Framework_TestCase
         $this->objectManager = Bootstrap::getObjectManager();
 
         $soapMock = $this->getMockFromWsdl(BP . '/vendor/boldcommerce/pim-api-service-edg/tests/_files/edg.wsdl');
-        $client = new \Bold\PIMService\Client();
+        $client = new \Edg\ErpService\Client();
         $client->setSoapClient($soapMock);
 
         $helper = $this->getMockBuilder('\Edg\Erp\Helper\Data')

@@ -130,7 +130,7 @@ class OrderImportTest extends \PHPUnit_Framework_TestCase
     protected function setUp()
     {
         $soapMock = $this->getMockFromWsdl(BP . '/vendor/boldcommerce/pim-api-service-edg/tests/_files/edg.wsdl');
-        $client = new \Bold\PIMService\Client();
+        $client = new \Edg\ErpService\Client();
         $client->setSoapClient($soapMock);
 
         $this->soap = $soapMock;

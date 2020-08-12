@@ -59,14 +59,14 @@ class OrderToDataModel
 
     /**
      * @param \Magento\Sales\Model\Order $order
-     * @return \Bold\PIMService\DataModel\Order
+     * @return \Edg\ErpService\DataModel\Order
      */
     public function convert(\Magento\Sales\Model\Order $order, $exportOrderType, $environment = null)
     {
 
         $data = $this->orderToArray($order, $exportOrderType, $environment);
 
-        $datamodel = new \Bold\PIMService\DataModel\Order($data);
+        $datamodel = new \Edg\ErpService\DataModel\Order($data);
         return $datamodel;
     }
 
