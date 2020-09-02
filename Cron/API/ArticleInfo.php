@@ -67,7 +67,6 @@ class ArticleInfo extends AbstractCron
 
     public function execute()
     {
-
         if ($this->helper->isArticleImportEnabled()) {
             $this->moduleLog(__METHOD__ . '(); - Article Import setting enabled, starting.', true);
             $response = $this->processProductUpdates();
@@ -100,8 +99,8 @@ class ArticleInfo extends AbstractCron
         $helper = $this->helper;
         $client = $helper->getSoapClient();
 
-        // For testing purposes
-        $this->_skuList = ['zwij320-nc-h'];
+        // Uncomment and put skus in the array for quick testing purposes
+//        $this->_skuList = ['1310-191797'];
 
         // If no specific list is set, use all
         if (sizeof($this->_skuList) == 0) {
@@ -184,8 +183,16 @@ class ArticleInfo extends AbstractCron
             }
 
             $product->unsetData('media_gallery');
-            $this->productRepository->save($product);
-            $this->moduleLog(__METHOD__ . '() Product #' . $sku . ': Saved.', true);
+
+            // uncomment to save product on global scope
+//            $product->setStoreId(0);
+//            $this->storeManager->setCurrentStore(0);
+
+            try {
+                $this->productRepository->save($product);
+            } catch (\Exception $e) {
+                $this->moduleLog(__METHOD__ . '() - WARNING: Errors attemping to update product with sku "' . $productdata['sku'] . '": ' . $e->getMessage());
+            }
 
         } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
             $this->moduleLog(__METHOD__ . '() - WARNING: Product "' . $sku . '" failed to load.');

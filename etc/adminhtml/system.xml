@@ -138,10 +138,6 @@
             </group>
             <group id="articleinfo" sortOrder="3" type="text" showInDefault="1">
                 <label>Articleinfo Synchronisation options</label>
-                <field id="sync_field_sku" sortOrder="10" type="select" showInDefault="1">
-                    <label>Sync SKU</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
                 <field id="sync_field_name" sortOrder="20" type="select" showInDefault="1">
                     <label>Sync Name</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

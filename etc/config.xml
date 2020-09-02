@@ -25,9 +25,8 @@
                 <export_order_statuses>processed_ogone</export_order_statuses>
             </settings>
             <articleinfo>
-                <sync_field_sku>1</sync_field_sku>
                 <sync_field_articlenumber>1</sync_field_articlenumber>
-                <sync_field_isbn>1</sync_field_isbn>
+                <sync_field_isbn>0</sync_field_isbn>
                 <sync_field_weight>1</sync_field_weight>
                 <sync_field_backorder_text>1</sync_field_backorder_text>
                 <sync_field_price>1</sync_field_price>
