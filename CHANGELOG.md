@@ -1,3 +1,17 @@
+## 1.1.0 (2020-12-16)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.1.0)
+
+*  [FEATURE][KEDG-1] - Added PHP 7.3 to composer.json *(TonMatton)*
+
+
+## 1.0.0 (2020-11-05)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.0.0)
+
+*  [FEATURE][KEDG-5] - Documentation *(TonMatton)*
+
+
 ## 0.3.0 (2020-09-02)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/0.3.0)
