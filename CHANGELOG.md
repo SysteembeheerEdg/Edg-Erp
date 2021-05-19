@@ -1,3 +1,10 @@
+## 1.2.0 (2021-05-19)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.2.0)
+
+*  [FEATURE][SEDG-137] - Added tax class mapping configuration table and modified getTaxClass() function in helper *(TonMatton)*
+
+
 ## 1.1.0 (2020-12-16)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.1.0)
