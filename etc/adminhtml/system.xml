@@ -166,6 +166,12 @@
                     <label>Sync Tax Classes</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="tax_class_mapping" translate="label comment" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Tax rate mapping</label>
+                    <comment>Add PIM tax rate to Magento tax rate mapping</comment>
+                    <frontend_model>Edg\Erp\Block\System\Config\Form\Field\FieldArray</frontend_model>
+                    <backend_model>Magento\Config\Model\Config\Backend\Serialized\ArraySerialized</backend_model>
+                </field>
                 <field id="sync_stock" sortOrder="90" type="select" showInDefault="1">
                     <label>Sync Stock Settings</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

@@ -40,8 +40,8 @@ class ArticleInfo extends AbstractCron
     /**
      * Array of skus to call on
      */
-    protected $_skuList = array();
-    
+    protected $_skuList = [];
+
     protected $apiMessages = [];
 
     public function __construct(
@@ -80,14 +80,12 @@ class ArticleInfo extends AbstractCron
                 $this->moduleLog(__METHOD__ . '(); - ' . __('Unable to apply rules.'), true);
                 $this->moduleLog(__METHOD__ . '(); - ' . $exception->getMessage(), true);
             }
-
         } else {
             $this->moduleLog(__METHOD__ . '(); - Article Import setting disabled, done.', true);
             $response = [['type'=>'error', 'message'=> 'Article Import setting disabled.']];
         }
-        
-        $this->apiMessages = $response;
 
+        $this->apiMessages = $response;
     }
 
     protected function processProductUpdates()
@@ -108,7 +106,6 @@ class ArticleInfo extends AbstractCron
         }
 
         $results = $client->pullArticleInfo($this->_skuList);
-
 
         foreach ($results as $result) {
             $articles = $result->getArticles();
@@ -170,15 +167,20 @@ class ArticleInfo extends AbstractCron
 
                 if ($this->helper->getArticleInfoSetting($setting)) {
                     $this->moduleLog(__METHOD__ . sprintf(
-                            ' Product #%s: parameter "%s" from "%s" to "%s".',
-                            $sku, $mapMage, $product->getData($mapMage), $data
-                        ), true);
+                        ' Product #%s: parameter "%s" from "%s" to "%s".',
+                        $sku,
+                        $mapMage,
+                        $product->getData($mapMage),
+                        $data
+                    ), true);
                     $product->setData($mapMage, $data);
                 } else {
                     $this->moduleLog(__METHOD__ . sprintf(
-                            ' Product #%s: skipping parameter "%s", based on disabled config "%s"',
-                            $sku, $mapMage, $setting
-                        ), true);
+                        ' Product #%s: skipping parameter "%s", based on disabled config "%s"',
+                        $sku,
+                        $mapMage,
+                        $setting
+                    ), true);
                 }
             }
 
@@ -193,7 +195,6 @@ class ArticleInfo extends AbstractCron
             } catch (\Exception $e) {
                 $this->moduleLog(__METHOD__ . '() - WARNING: Errors attemping to update product with sku "' . $productdata['sku'] . '": ' . $e->getMessage());
             }
-
         } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
             $this->moduleLog(__METHOD__ . '() - WARNING: Product "' . $sku . '" failed to load.');
         } catch (\Exception $e) {
@@ -215,26 +216,29 @@ class ArticleInfo extends AbstractCron
 
         $oldStatus = $product->getStatus();
 
-
         if ($orderable == 'true' && $product->getStatus() == Status::STATUS_DISABLED) {
-            $this->moduleLog(__METHOD__ . ': Product #' . $product->getSku() . ': Setting product status to enabled.',
-                true);
+            $this->moduleLog(
+                __METHOD__ . ': Product #' . $product->getSku() . ': Setting product status to enabled.',
+                true
+            );
             $product->setStatus(Status::STATUS_ENABLED);
         } elseif ($orderable != 'true' && $product->getStatus() == Status::STATUS_ENABLED) {
-            $this->moduleLog(__METHOD__ . ': Product #' . $product->getSku() . ': Updated product to status Disabled.',
-                true);
+            $this->moduleLog(
+                __METHOD__ . ': Product #' . $product->getSku() . ': Updated product to status Disabled.',
+                true
+            );
             $product->setStatus(Status::STATUS_DISABLED);
         } else {
             $this->moduleLog(__METHOD__ . ': Product #' . $product->getSku() . ': No product status changes.', true);
         }
 
         $this->moduleLog(__METHOD__ . sprintf(
-                ' Product #%s: Orderable="%s", Status "%s" => "%s"',
-                $product->getSku(),
-                $orderable,
-                $oldStatus,
-                $product->getStatus()
-            ), true);
+            ' Product #%s: Orderable="%s", Status "%s" => "%s"',
+            $product->getSku(),
+            $orderable,
+            $oldStatus,
+            $product->getStatus()
+        ), true);
 
         return $this;
     }
@@ -276,24 +280,25 @@ class ArticleInfo extends AbstractCron
             }
 
             $this->moduleLog(__METHOD__ . sprintf(
-                    ' Setting stock data for product "%s": qty="%s", is_in_stock="%s", backorder="%s"',
-                    $sku,
-                    $newQty,
-                    $inStock,
-                    $newBackorders
-                ), true);
+                ' Setting stock data for product "%s": qty="%s", is_in_stock="%s", backorder="%s"',
+                $sku,
+                $newQty,
+                $inStock,
+                $newBackorders
+            ), true);
 
             if ($newBackorders != $oldBackorders) {
                 $stock->setBackorders($newBackorders);
-                $this->moduleLog(__METHOD__ . ': Product #' . $sku . ': Backorder status "' . $oldBackorders . '" updated to "' . $newBackorders . '".',
-                    true);
+                $this->moduleLog(
+                    __METHOD__ . ': Product #' . $sku . ': Backorder status "' . $oldBackorders . '" updated to "' . $newBackorders . '".',
+                    true
+                );
             } else {
                 $this->moduleLog(__METHOD__ . ': Product #' . $sku . ': No need for backorder update.', true);
             }
 
             $this->stockRegistry->updateStockItemBySku($sku, $stock);
             $product->setQuantityAndStockStatus($productQtyAndStock);
-
         } else {
             $this->moduleLog(__METHOD__ . '() - WARNING: could not load stock model for product "' . $product->getSku() . '"');
         }
@@ -311,33 +316,38 @@ class ArticleInfo extends AbstractCron
         ProductInterface $product,
         \Edg\ErpService\DataModel\ArticleInfo $article
     ) {
-
         if ($product->getTypeId() == 'bundle') {
             $this->moduleLog(__METHOD__ . sprintf(
-                    ' Ignoring price tiers for bundle product #%s based on product type "%s"',
-                    $product->getSku(),
-                    $product->getTypeId()
-                ), true);
+                ' Ignoring price tiers for bundle product #%s based on product type "%s"',
+                $product->getSku(),
+                $product->getTypeId()
+            ), true);
             return false;
         }
 
         $this->moduleLog(__METHOD__ . sprintf(
-                ' Applying price tiers for product #%s based on product type "%s"',
-                $product->getSku(),
-                $product->getTypeId()
-            ), true);
+            ' Applying price tiers for product #%s based on product type "%s"',
+            $product->getSku(),
+            $product->getTypeId()
+        ), true);
 
         $oldTiers = $product->getTierPrices();
         foreach ($oldTiers as $oldTier) {
             $found = false;
             if ($oldTier->getCustomerGroupId() != \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL) {
-                $this->tierpriceManagement->remove($product->getSku(), $oldTier->getCustomerGroupId(),
-                    $oldTier->getQty());
+                $this->tierpriceManagement->remove(
+                    $product->getSku(),
+                    $oldTier->getCustomerGroupId(),
+                    $oldTier->getQty()
+                );
                 continue;
             }
             foreach ($article->getPriceTiers() as $newTier) {
-                if ($newTier['amount'] == $oldTier->getQty() && ((float)str_replace(',', '.',
-                        (string)$newTier['price'])) == $oldTier->getValue()
+                if ($newTier['amount'] == $oldTier->getQty() && ((float)str_replace(
+                    ',',
+                    '.',
+                    (string)$newTier['price']
+                )) == $oldTier->getValue()
                 ) {
                     $found = true;
                     break;
@@ -352,8 +362,10 @@ class ArticleInfo extends AbstractCron
             $price = (float)str_replace(',', '.', (string)$tier['price']);
             $qty = (int)$tier['amount'];
 
-            $this->moduleLog(__METHOD__ . ': Product #' . $product->getSku() . ': Adding tier price "' . $price . '" for qty "' . $qty . '"',
-                true);
+            $this->moduleLog(
+                __METHOD__ . ': Product #' . $product->getSku() . ': Adding tier price "' . $price . '" for qty "' . $qty . '"',
+                true
+            );
 
             try {
                 $this->tierpriceManagement->add(
@@ -377,15 +389,16 @@ class ArticleInfo extends AbstractCron
 
     protected function updateProductTaxClass(ProductInterface $product, \Edg\ErpService\DataModel\ArticleInfo $article)
     {
-
         $map = $this->helper->getTaxClassMapping();
         $rate = (string)(float)str_replace(',', '.', $article->getBtw());
 
         if (array_key_exists($rate, $map)) {
             $this->moduleLog(__METHOD__ . sprintf(
-                    ' Product #%s: Found matching tax class id "%s" for rate "%s"',
-                    $product->getSku(), $map[$rate], $rate
-                ), true);
+                ' Product #%s: Found matching tax class id "%s" for rate "%s"',
+                $product->getSku(),
+                $map[$rate],
+                $rate
+            ), true);
             $product->setTaxClassId($map[$rate]);
         } else {
             $this->moduleLog(__METHOD__ . ': Product #' . $product->getSku() . ': WARNING: No matching tax_class_id for rate "' . $rate . '",');

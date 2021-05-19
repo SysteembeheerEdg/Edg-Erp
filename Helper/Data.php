@@ -179,26 +179,21 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Mapping for Pim tax-tag to Magento Class ID
-     *
-     *
-     * Return format (btw percentage implies class_id):
-     *        array( 21 => 6, 6 => 5, 0 => 8);
+     * Get tax class mapping based on mapping configured in bold_orderexim/articleinfo/tax_class_mapping
+     * @return array
      */
     public function getTaxClassMapping()
     {
-        if (!array_key_exists('tax_class_mapping', $this->_cache)) {
-            $classes = [];
-            $calc = $this->taxCalculation;
-            $rates = $calc->getTaxRates([], [], false);
+        $taxClassMappingConfig = $this->scopeConfig->getValue('bold_orderexim/articleinfo/tax_class_mapping', ScopeInterface::SCOPE_STORE);
+        $taxClassMapping = [];
 
-            foreach ($rates as $class => $rate) {
-                $classes[(string)(float)$rate] = $class;
+        if ($taxClassMappingConfig && is_string($taxClassMappingConfig)) {
+            foreach (json_decode($taxClassMappingConfig) as $taxMappingRow) {
+                $taxClassMapping[$taxMappingRow->pim_tax_rate] = $taxMappingRow->magento_tax_class;
             }
-            $this->_cache['tax_class_mapping'] = $classes;
         }
 
-        return $this->_cache['tax_class_mapping'];
+        return $taxClassMapping;
     }
 
     public function getArticleInfoSettings()
