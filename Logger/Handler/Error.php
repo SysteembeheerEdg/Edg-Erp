@@ -9,7 +9,7 @@ class Error extends HandlerAbstract
     /**
      * @var string
      */
-    protected $fileName = 'error.log';
+    protected $fileName = '/var/log/bold_pim/error.log';
 
     /**
      * @var int
