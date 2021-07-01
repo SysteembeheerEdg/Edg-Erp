@@ -9,7 +9,7 @@ class Info extends HandlerAbstract
     /**
      * @var string
      */
-    protected $fileName = 'info.log';
+    protected $fileName = '/var/log/bold_pim/info.log';
 
     /**
      * @var int
