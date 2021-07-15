@@ -1,3 +1,10 @@
+## 1.3.0 (2021-07-15)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.3.0)
+
+*  [FEATURE][SEDG-162] - Fixes for pipeline deployment *(TonMatton)*
+
+
 ## 1.2.0 (2021-05-19)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.2.0)

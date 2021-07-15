@@ -9,7 +9,7 @@ class Debug extends HandlerAbstract
     /**
      * @var string
      */
-    protected $fileName = 'debug.log';
+    protected $fileName = '/var/log/bold_pim/debug.log';
 
     /**
      * @var int

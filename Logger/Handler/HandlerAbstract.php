@@ -9,17 +9,12 @@ class HandlerAbstract extends Base
 {
     /**
      * HandlerAbstract constructor.
-     *
-     * Set default filePath for PimLogger logs folder
-     *
      * @param DriverInterface $filesystem
-     * @param null|string $filePath
      */
     public function __construct(
-        DriverInterface $filesystem,
-        $filePath = BP . '/var/log/bold_pim/'
+        DriverInterface $filesystem
     ) //@codingStandardsIgnoreLine
     {
-        parent::__construct($filesystem, $filePath);
+        parent::__construct($filesystem);
     }
 }
