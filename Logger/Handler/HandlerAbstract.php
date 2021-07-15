@@ -10,11 +10,13 @@ class HandlerAbstract extends Base
     /**
      * HandlerAbstract constructor.
      * @param DriverInterface $filesystem
+     * @param string $filePath
      */
     public function __construct(
-        DriverInterface $filesystem
+        DriverInterface $filesystem,
+        $filePath = '/var/log/bold_pim/'
     ) //@codingStandardsIgnoreLine
     {
-        parent::__construct($filesystem);
+        parent::__construct($filesystem, $filePath);
     }
 }
