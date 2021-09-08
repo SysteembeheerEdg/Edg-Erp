@@ -142,6 +142,10 @@ class ArticleInfo extends AbstractCron
         try {
             $product = $this->productRepository->get($sku, true);
 
+            // Set current store and store id on product to 0 to prevent a product save on store level
+            $this->storeManager->setCurrentStore(0);
+            $product->setStoreId(0);
+
             if ($this->helper->getArticleInfoSetting('sync_product_status') == '1') {
                 $this->updateProductStatus($product, $article);
             }
@@ -187,8 +191,8 @@ class ArticleInfo extends AbstractCron
             $product->unsetData('media_gallery');
 
             // uncomment to save product on global scope
-//            $product->setStoreId(0);
-//            $this->storeManager->setCurrentStore(0);
+            $product->setStoreId(0);
+            $this->storeManager->setCurrentStore(0);
 
             try {
                 $this->productRepository->save($product);

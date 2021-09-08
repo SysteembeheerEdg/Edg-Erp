@@ -1,3 +1,17 @@
+## 1.3.2 (2021-09-08)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.3.2)
+
+*  [FEATURE][SEDG-175] - Made sure that products are saved on global level instead of on store level and fixed logging path to prevent exception *(TonMatton)*
+
+
+## 1.3.1 (2021-07-15)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.3.1)
+
+*  [FEATURE][SEDG-162] - Change request of Martijn *(TonMatton)*
+
+
 ## 1.3.0 (2021-07-15)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.3.0)
