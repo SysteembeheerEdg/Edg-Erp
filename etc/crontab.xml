@@ -15,5 +15,8 @@
         <job name="bold_pim_articleinfo" instance="Edg\Erp\Cron\API\ArticleInfo" method="execute">
             <schedule>0 0 * * *</schedule>
         </job>
+        <job name="edg_pim_articleinfo_update" instance="Edg\Erp\Cron\API\ArticleInfoUpdate" method="execute">
+            <schedule>*/5 * * * *</schedule>
+        </job>
     </group>
 </config>

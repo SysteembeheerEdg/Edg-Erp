@@ -132,17 +132,43 @@ class Data extends AbstractHelper
     /**
      * Retrieve list of SKUs in Magento catalog
      */
-    public function getSkusArray()
+    public function getUpdateSkusArray()
+    {
+        if (!array_key_exists('product_sku_array', $this->_cache)) {
+            $this->log(__METHOD__ . '() - Generating comma-separated list of SKUs', true);
+
+            $sku = array();
+            $prefix = $this->getSkuPrefix();
+            $client = $this->getSoapClient();
+
+            // Get updated/changed Products
+            $mutationsFull = $client->pullStockUpdates($this->getEnvironmentTag());
+            // Add mutated Products to Sky array
+            foreach($mutationsFull as $mutationsList) {
+                $mutations = $mutationsList->getMutations();
+                foreach($mutations as $mutatedProduct){
+                    $sku[] = $prefix . $mutatedProduct->getSku();
+                }
+            }
+
+            $this->log(__METHOD__ . '() - List contains ' . sizeof($sku) . ' skus.');
+            $this->_cache['product_sku_array'] = $sku;
+        }
+
+        return $this->_cache['product_sku_array'];
+    }
+
+    /**
+     * Retrieve list of SKUs in Magento catalog
+     */
+    public function getFullSkusArray()
     {
         if (!array_key_exists('product_sku_array', $this->_cache)) {
             $this->log(__METHOD__ . '() - Generating comma-separated list of SKUs', true);
 
             $products = $this->productRepository->getList($this->criteriaBuilder->create());
-
             $_productCollection = $products->getItems();
-
             $sku = array();
-
             $prefix = $this->getSkuPrefix();
 
             foreach ($_productCollection as $product) {
