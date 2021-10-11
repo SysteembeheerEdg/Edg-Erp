@@ -94,15 +94,14 @@ class ArticleInfo extends AbstractCron
 
         $this->moduleLog(__METHOD__ . '() - Begin');
 
-        $helper = $this->helper;
-        $client = $helper->getSoapClient();
+        $client = $this->helper->getSoapClient();
 
         // Uncomment and put skus in the array for quick testing purposes
 //        $this->_skuList = ['1310-191797'];
 
         // If no specific list is set, use all
         if (sizeof($this->_skuList) == 0) {
-            $this->_skuList = $helper->getSkusArray();
+            $this->_skuList = $this->getSkuArray();
         }
 
         $results = $client->pullArticleInfo($this->_skuList);
@@ -427,5 +426,13 @@ class ArticleInfo extends AbstractCron
     public function getApiMessages()
     {
         return $this->apiMessages;
+    }
+
+    /**
+     * @return array|mixed
+     */
+    protected function getSkuArray()
+    {
+        return $this->helper->getFullSkusArray();
     }
 }

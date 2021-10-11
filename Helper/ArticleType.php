@@ -63,7 +63,7 @@ class ArticleType extends AbstractHelper
                 /** @var \Magento\Sales\Model\Order\Shipment $shipment */
                 $shipment = $this->shipmentFactory->create($order, $nonShippableItems);
 
-                $comment = 'Bold PIM: Auto-created Shipment for non-shippable items.';
+                $comment = 'EDG PIM integration: Auto-created Shipment for non-shippable items.';
 
                 $shipment->addComment($comment, false, false);
 

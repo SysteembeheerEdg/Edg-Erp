@@ -5,7 +5,7 @@
             <label>EDG PIM</label>
         </tab>
         <section id="bold_orderexim" translate="label" type="text" showInDefault="1">
-            <label>Bold PIM integration</label>
+            <label>EDG PIM integration</label>
             <tab>edg_pim_tab</tab>
             <resource>Edg_Erp::system_config</resource>
             <group id="settings" translate="label" sortOrder="1" type="text" showInDefault="1">

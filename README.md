@@ -65,3 +65,14 @@ These settings are necessary for recognition of the environment when exporting o
 
 #### Order export logging
 - In ```var/log/bold_pim/info.log``` the order export log files can be found
+
+### Article Sync 
+
+This module knows 3 ways for syncing the articles with Magento 
+
+- Manually per article
+- At 00:00 the full article list gets synchronized by a crontask based on all articles present in Magento 
+- every 5 minutes the articles get synchronized by a crontask based on the queue 
+- To test the article sync locally adjust the 'PIM environment tag(bold_orderexim/settings/environment_tag)' to 'educatheek_test'
+
+

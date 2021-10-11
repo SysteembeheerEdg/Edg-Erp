@@ -71,7 +71,7 @@ class InstallData implements InstallDataInterface
             [
                 'group' => 'Product Details',
                 'type' => 'int',
-                'label' => 'Bold PIM ArticleType',
+                'label' => 'EDG PIM ArticleType',
                 'input' => 'select',
                 'source' => 'Edg\Erp\Model\SourceModel\Eav\ArticleType',
                 'global' => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
