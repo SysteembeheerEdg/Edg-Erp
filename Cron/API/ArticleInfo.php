@@ -103,21 +103,26 @@ class ArticleInfo extends AbstractCron
         if (sizeof($this->_skuList) == 0) {
             $this->_skuList = $this->getSkuArray();
         }
+        
+        if ($this->_skuList) {
+            $results = $client->pullArticleInfo($this->_skuList);
 
-        $results = $client->pullArticleInfo($this->_skuList);
+            foreach ($results as $result) {
+                $articles = $result->getArticles();
+                foreach ($articles as $article) {
+                    if (!$article->isArticleExist()) {
+                        $msg = 'No match for product with sku "' . $article->getArticleNumber() . '", product does not exist in PIM.';
+                        $this->moduleLog(__METHOD__ . '() ' . $msg, true);
+                        $messages[] = ['type' => 'error', 'message' => $msg];
+                        continue;
+                    }
 
-        foreach ($results as $result) {
-            $articles = $result->getArticles();
-            foreach ($articles as $article) {
-                if (!$article->isArticleExist()) {
-                    $msg = 'No match for product with sku "' . $article->getArticleNumber() . '", product does not exist in PIM.';
-                    $this->moduleLog(__METHOD__ . '() ' . $msg, true);
-                    $messages[] = ['type'=>'error', 'message' => $msg];
-                    continue;
+                    $this->processProduct($article);
+                    $messages[] = [
+                        'type' => 'success',
+                        'message' => 'Successfully synchronized sku "' . $article->getArticleNumber() . '".'
+                    ];
                 }
-
-                $this->processProduct($article);
-                $messages[] = ['type'=>'success', 'message' => 'Successfully synchronized sku "' . $article->getArticleNumber() . '".'];
             }
         }
         return $messages;
