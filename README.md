@@ -73,5 +73,6 @@ This module knows 3 ways for syncing the articles with Magento
 - Manually per article
 - At 00:00 the full article list gets synchronized by a crontask based on all articles present in Magento 
 - every 5 minutes the articles get synchronized by a crontask based on the queue 
+- To test the article sync locally adjust the 'PIM environment tag(bold_orderexim/settings/environment_tag)' to 'educatheek_test'
 
 
