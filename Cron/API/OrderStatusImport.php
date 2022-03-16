@@ -125,8 +125,8 @@ class OrderStatusImport extends AbstractCron
                         throw $e;
                     }
 
-                    $this->serviceLog("Order " . $orderIncrementId . " failed import", \Zend\Log\Logger::ERR);
-                    $this->serviceLog($e->getMessage(), \Zend\Log\Logger::ERR);
+                    $this->serviceLog("Order " . $orderIncrementId . " failed import", \Monolog\Logger::ERROR);
+                    $this->serviceLog($e->getMessage(), \Monolog\Logger::ERROR);
 
                     $this->moduleLog('WARNING: Order ' . $orderIncrementId . ' failed import');
                     $this->moduleLog($e->getMessage());

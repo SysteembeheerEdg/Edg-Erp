@@ -68,7 +68,7 @@ class OrderExport extends AbstractCron
             $this->serviceLog('Start Export Orders');
 
             $this->moduleLog('*** start order export (multiple orders)', true);
-            
+
             $collection = $this->orderFactory->create()->getCollection()
                 ->addFieldToFilter('status', ['in' => $orderStatuses])
                 ->addFieldToFilter('pim_is_exported', 0);
@@ -101,7 +101,7 @@ class OrderExport extends AbstractCron
                         }
                     } catch (\Exception $e) {
                         $this->serviceLog('Error when exporting order #' . $order->getIncrementId() . ' - ' . $e->getMessage(),
-                            \Zend\Log\Logger::ERR);
+                            \Monolog\Logger::ERROR);
 
                         $this->moduleLog(__METHOD__ . ' Error exporting order #' . $order->getIncrementId() . ' ' . $e->getMessage());
 
@@ -111,7 +111,7 @@ class OrderExport extends AbstractCron
                             "Error when exporting order #{$order->getIncrementId()}. " . $e->getMessage()
                         );
 
-                        $this->serviceLog('Finished export with exception.', \Zend\Log\Logger::ERR);
+                        $this->serviceLog('Finished export with exception.', \Monolog\Logger::ERROR);
                         return $this;
                     }
                 }

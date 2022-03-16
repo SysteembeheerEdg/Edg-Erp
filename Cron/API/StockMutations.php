@@ -91,8 +91,8 @@ class StockMutations extends AbstractCron
                 } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
                     $this->serviceLog('Product with SKU ' . $sku . ' was not found in the Magento catalog');
                 } catch (\Exception $e) {
-                    $this->serviceLog('Error during setting stock for ' . $sku, Logger::ERR);
-                    $this->serviceLog($e->getMessage(), Logger::ERR);
+                    $this->serviceLog('Error during setting stock for ' . $sku, \Monolog\Logger::ERROR);
+                    $this->serviceLog($e->getMessage(), \Monolog\Logger::ERROR);
                     $this->sendErrorMail($this->getErrorEmail(),
                         'Exception occured during stock mutations from EDG for product ' . $sku, $e->getMessage());
                 }
