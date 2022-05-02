@@ -4,18 +4,18 @@ namespace Edg\Erp\Cron\API;
 
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Mail\Message;
-use Zend\Log\Logger;
-use Zend\Log\Writer\Stream;
+use Magento\Framework\Logger\Monolog;
+use Magento\Framework\Mail\EmailMessage;
+use Monolog\Logger;
 
 abstract class AbstractCron
 {
     protected $loglevels = [
-        Logger::EMERG,
+        Logger::EMERGENCY,
         Logger::ALERT,
-        Logger::CRIT,
-        Logger::ERR,
-        Logger::WARN,
+        Logger::CRITICAL,
+        Logger::ERROR,
+        Logger::WARNING,
         Logger::NOTICE,
         Logger::INFO,
         Logger::DEBUG
@@ -24,7 +24,7 @@ abstract class AbstractCron
     /**
      * @var Logger
      */
-    protected $zendLogger;
+    protected $monolog;
 
     /**
      * @var \Edg\Erp\Helper\Data
@@ -59,14 +59,16 @@ abstract class AbstractCron
     protected $_logOutputEnabled = false;
 
     public function __construct(
-        \Edg\Erp\Helper\Data $helper,
-        DirectoryList $directoryList,
-        ConfigInterface $config,
-        Message $message,
+        \Edg\Erp\Helper\Data              $helper,
+        DirectoryList                     $directoryList,
+        Monolog                           $monolog,
+        ConfigInterface                   $config,
+        Message                           $message,
         \Magento\Store\Model\StoreManager $storeManager,
-        $settings = []
-    ) {
-        $this->zendLogger = new Logger();
+                                          $settings = []
+    )
+    {
+        $this->monolog = $monolog;
         $this->helper = $helper;
         $this->config = $config;
         $this->email = $message;
@@ -161,6 +163,7 @@ abstract class AbstractCron
      * @param String $subject
      * @param String $content
      * @return $this
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function sendErrorMail($email, $subject, $content)
     {
@@ -186,7 +189,7 @@ abstract class AbstractCron
             $mail->send();
         } catch (\Exception $e) {
             $this->moduleLog('unable to send PIM error email ' . $e->getMessage() . ', ' . $subject . ', ' . $content,
-                Logger::ERR);
+                Logger::ERROR);
         }
 
         $this->config->saveConfig('bold/bold_release/last_sent_error_email', time(), 'default', 0);
@@ -211,17 +214,7 @@ abstract class AbstractCron
             $priority = Logger::INFO;
         }
 
-        if (!$this->zendLogger->getWriters()) {
-            $this->addLogStreamToServiceLogger('php://stderr');
-        }
-
-        $this->zendLogger->log($priority, $message, $params);
+        $this->monolog->log($priority, $message, $params);
     }
 
-    protected function addLogStreamToServiceLogger($path)
-    {
-        $writer = new Stream($path);
-        $this->zendLogger->addWriter($writer);
-        return $this;
-    }
 }
