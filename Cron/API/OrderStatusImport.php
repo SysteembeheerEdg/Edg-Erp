@@ -2,33 +2,79 @@
 
 namespace Edg\Erp\Cron\API;
 
+use Edg\Erp\Helper\Data;
+use Magento\Framework\Mail\TransportInterface;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Mail\Message;
+use Magento\Framework\DB\Transaction;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Logger\Monolog;
+use Laminas\Mail\Message;
+use Magento\Sales\Model\Order\Email\Sender\ShipmentSender;
+use Magento\Sales\Model\Order\ShipmentFactory;
+use Magento\Sales\Model\OrderFactory;
+use Magento\Store\Model\StoreManager;
 
 class OrderStatusImport extends AbstractCron
 {
     const TRACKING_TITLE = 'Track & Trace';
     const CARRIER_CODE = 'PostNL';
 
+    /**
+     * @var OrderFactory
+     */
     protected $orderFactory;
+
+    /**
+     * @var ShipmentFactory
+     */
     protected $shipmentFactory;
+
+    /**
+     * @var Transaction
+     */
     protected $transaction;
+
+    /**
+     * @var ShipmentSender
+     */
     protected $shipmentMailer;
 
+    /**
+     * @var Monolog
+     */
+    protected Monolog $monolog;
+
+    /**
+     * @param Data $helper
+     * @param DirectoryList $directoryList
+     * @param Monolog $monolog
+     * @param ConfigInterface $config
+     * @param Message $message
+     * @param TransportInterface $transportInterface
+     * @param StoreManager $storeManager
+     * @param OrderFactory $orderFactory
+     * @param ShipmentFactory $shipmentFactory
+     * @param Transaction $transaction
+     * @param ShipmentSender $sender
+     * @param array $settings
+     * @throws FileSystemException
+     */
     public function __construct(
-        \Edg\Erp\Helper\Data $helper,
+        Data $helper,
         DirectoryList $directoryList,
+        Monolog $monolog,
         ConfigInterface $config,
         Message $message,
-        \Magento\Store\Model\StoreManager $storeManager,
-        \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Magento\Sales\Model\Order\ShipmentFactory $shipmentFactory,
-        \Magento\Framework\DB\Transaction $transaction,
-        \Magento\Sales\Model\Order\Email\Sender\ShipmentSender $sender,
+        TransportInterface $transportInterface,
+        StoreManager $storeManager,
+        OrderFactory $orderFactory,
+        ShipmentFactory $shipmentFactory,
+        Transaction $transaction,
+        ShipmentSender $sender,
         array $settings = []
     ) {
-        parent::__construct($helper, $directoryList, $config, $message, $storeManager, $settings);
+        parent::__construct($helper, $directoryList, $monolog, $config, $message, $storeManager, $transportInterface, $settings);
         $this->orderFactory = $orderFactory;
         $this->shipmentFactory = $shipmentFactory;
         $this->transaction = $transaction;

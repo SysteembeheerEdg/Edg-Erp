@@ -2,29 +2,51 @@
 
 namespace Edg\Erp\Cron\API;
 
+use Edg\Erp\Helper\Data;
+use Magento\Framework\Mail\TransportInterface;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Mail\Message;
-use Zend\Log\Logger;
+use Laminas\Mail\Message;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Logger\Monolog;
+use Magento\Store\Model\StoreManager;
 
 class StockMutations extends AbstractCron
 {
 
     const XML_PATH_STOCKMUTATIONS_STRIP_PREFIX = 'stockmutations_import_strip_prefix';
 
-    protected $stockregistry;
+    /**
+     * @var StockRegistryInterface
+     */
+    protected StockRegistryInterface $stockregistry;
 
+    /**
+     * @param Data $helper
+     * @param DirectoryList $directoryList
+     * @param Monolog $monolog
+     * @param ConfigInterface $config
+     * @param Message $message
+     * @param TransportInterface $transportInterface
+     * @param StoreManager $storeManager
+     * @param StockRegistryInterface $stockRegistry
+     * @param array $settings
+     * @throws FileSystemException
+     */
     public function __construct(
-        \Edg\Erp\Helper\Data $helper,
+        Data $helper,
         DirectoryList $directoryList,
+        Monolog $monolog,
         ConfigInterface $config,
         Message $message,
-        \Magento\Store\Model\StoreManager $storeManager,
-        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
-        $settings = []
+        TransportInterface $transportInterface,
+        StoreManager $storeManager,
+        StockRegistryInterface $stockRegistry,
+        array $settings = []
     ) {
         $this->stockregistry = $stockRegistry;
-        parent::__construct($helper, $directoryList, $config, $message, $storeManager, $settings);
+        parent::__construct($helper, $directoryList, $monolog, $config, $message, $storeManager, $transportInterface,$settings);
     }
 
     public function execute()

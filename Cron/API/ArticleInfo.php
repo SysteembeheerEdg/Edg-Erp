@@ -2,67 +2,102 @@
 
 namespace Edg\Erp\Cron\API;
 
+use Edg\Erp\Helper\Data;
+use Magento\Framework\Mail\TransportInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Magento\Catalog\Model\Product\TierPriceManagement;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\CatalogRule\Model\Rule\Job;
+use Magento\Framework\App\Cache;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Mail\Message;
+use Laminas\Mail\Message;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Logger\Monolog;
+use Magento\Store\Model\StoreManager;
 
 class ArticleInfo extends AbstractCron
 {
     /**
-     * @var \Magento\Catalog\Api\ProductRepositoryInterface
+     * @var ProductRepositoryInterface
      */
-    protected $productRepository;
+    protected ProductRepositoryInterface $productRepository;
 
     /**
-     * @var \Magento\CatalogInventory\Api\StockRegistryInterface
+     * @var StockRegistryInterface
      */
-    protected $stockRegistry;
+    protected StockRegistryInterface $stockRegistry;
 
     /**
-     * @var \Magento\Catalog\Model\Product\TierPriceManagement
+     * @var TierPriceManagement
      */
-    protected $tierpriceManagement;
+    protected TierPriceManagement $tierpriceManagement;
 
     /**
-     * @var \Magento\CatalogRule\Model\Rule\Job
+     * @var Job
      */
-    protected $catalogRuleJob;
+    protected Job $catalogRuleJob;
 
     /**
-     * @var \Magento\Framework\App\Cache
+     * @var Cache
      */
-    protected $cache;
-    protected $fieldsToSkip = [
+    protected Cache $cache;
+
+    /**
+     * @var string[]
+     */
+    protected array $fieldsToSkip = [
         'sku'
     ];
     /**
      * Array of skus to call on
      */
-    protected $_skuList = [];
+    protected array $_skuList = [];
 
-    protected $apiMessages = [];
+    /**
+     * @var array
+     */
+    protected array $apiMessages = [];
 
+    /**
+     * @param Data $helper
+     * @param DirectoryList $directoryList
+     * @param Monolog $monolog
+     * @param ConfigInterface $config
+     * @param Message $message
+     * @param TransportInterface $transportInterface
+     * @param StoreManager $storeManager
+     * @param ProductRepositoryInterface $productRepository
+     * @param StockRegistryInterface $stockRegistryInterface
+     * @param TierPriceManagement $tierPriceManagement
+     * @param Job $catalogRuleJob
+     * @param Cache $cache
+     * @param array $settings
+     * @throws FileSystemException
+     */
     public function __construct(
-        \Edg\Erp\Helper\Data $helper,
+        Data $helper,
         DirectoryList $directoryList,
+        Monolog $monolog,
         ConfigInterface $config,
         Message $message,
-        \Magento\Store\Model\StoreManager $storeManager,
-        \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
-        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistryInterface,
-        \Magento\Catalog\Model\Product\TierPriceManagement $tierPriceManagement,
-        \Magento\CatalogRule\Model\Rule\Job $catalogRuleJob,
-        \Magento\Framework\App\Cache $cache,
-        $settings = []
+        TransportInterface $transportInterface,
+        StoreManager $storeManager,
+        ProductRepositoryInterface $productRepository,
+        StockRegistryInterface $stockRegistryInterface,
+        TierPriceManagement $tierPriceManagement,
+        Job $catalogRuleJob,
+        Cache $cache,
+        array $settings = []
     ) {
         $this->productRepository = $productRepository;
         $this->stockRegistry = $stockRegistryInterface;
         $this->tierpriceManagement = $tierPriceManagement;
         $this->catalogRuleJob = $catalogRuleJob;
         $this->cache = $cache;
-        parent::__construct($helper, $directoryList, $config, $message, $storeManager, $settings);
+        parent::__construct($helper, $directoryList, $monolog, $config, $message, $storeManager, $transportInterface, $settings);
     }
 
     public function execute()
@@ -103,7 +138,7 @@ class ArticleInfo extends AbstractCron
         if (sizeof($this->_skuList) == 0) {
             $this->_skuList = $this->getSkuArray();
         }
-        
+
         if ($this->_skuList) {
             $results = $client->pullArticleInfo($this->_skuList);
 

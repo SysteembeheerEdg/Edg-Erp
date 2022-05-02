@@ -2,6 +2,9 @@
 
 namespace Edg\Erp\Helper;
 
+use Edg\Erp\Logger\PimLogger;
+use Edg\ErpService\Client;
+use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -34,7 +37,7 @@ class Data extends AbstractHelper
         ProductRepositoryInterface $productRepository,
         SearchCriteriaBuilder $criteriaBuilder,
         Calculation $taxCalculation,
-        \Edg\Erp\Logger\PimLogger $logger
+        PimLogger $logger
     ) {
         parent::__construct($context);
         $this->productRepository = $productRepository;
@@ -319,7 +322,8 @@ class Data extends AbstractHelper
     /**
      * Retrieve new PIM soap client instance
      *
-     * @return \Edg\ErpService\Client
+     * @return Client
+     * @throws Exception
      */
     public function getSoapClient()
     {
@@ -340,10 +344,10 @@ class Data extends AbstractHelper
             $settings['location'] = $location;
         }
 
-        $client = new \Edg\ErpService\Client($this->getWsAddress(), $settings);
+        $client = new Client($this->getWsAddress(), $settings);
 
         if ($this->getLogLibraryEnabled()) {
-            $debug = $this->getLogLibraryDebugMode() ? true : false;
+            $debug = (bool)$this->getLogLibraryDebugMode();
             $client->setLogger($this->getPimLogger(), $debug);
         }
 
@@ -417,7 +421,7 @@ class Data extends AbstractHelper
     /**
      * retrieve Edg Erp logger
      *
-     * @return \Edg\Erp\Logger\PimLogger
+     * @return PimLogger
      */
     public function getPimLogger()
     {

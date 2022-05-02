@@ -2,15 +2,19 @@
 
 namespace Edg\Erp\Cron\API;
 
+use Edg\Erp\Helper\Data;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Logger\Monolog;
-use Magento\Framework\Mail\EmailMessage;
+use Laminas\Mail\Message;
+use Magento\Framework\Mail\TransportInterface;
+use Magento\Store\Model\StoreManager;
 use Monolog\Logger;
 
 abstract class AbstractCron
 {
-    protected $loglevels = [
+    protected array $loglevels = [
         Logger::EMERGENCY,
         Logger::ALERT,
         Logger::CRITICAL,
@@ -22,57 +26,93 @@ abstract class AbstractCron
     ];
 
     /**
-     * @var Logger
+     * @var Monolog
      */
-    protected $monolog;
+    protected Monolog $monolog;
 
     /**
-     * @var \Edg\Erp\Helper\Data
+     * @var Data
      */
-    protected $helper;
+    protected Data $helper;
 
     /**
      * @var ConfigInterface
      */
-    protected $config;
+    protected ConfigInterface $config;
 
     /**
      * @var Message
      */
-    protected $email;
+    protected Message $email;
 
     /**
-     * @var \Magento\Store\Model\StoreManager
+     * @var StoreManager
      */
-    protected $storeManager;
-
-
-    protected $_exportDir = null;
-    protected $_importDir = null;
-    protected $_debugDir = null;
-    protected $_stockmutationsDir = null;
-    protected $settings;
+    protected StoreManager $storeManager;
 
     /**
-     *
+     * @var TransportInterface
      */
-    protected $_logOutputEnabled = false;
+    protected TransportInterface $transportInterface;
 
+    /**
+     * @var string|null
+     */
+    protected ?string $_exportDir = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $_importDir = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $_debugDir = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $_stockmutationsDir = null;
+
+    /**
+     * @var array
+     */
+    protected array $settings;
+
+    /**
+     * @var bool
+     */
+    protected bool $_logOutputEnabled = false;
+
+    /**
+     * @param Data $helper
+     * @param DirectoryList $directoryList
+     * @param Monolog $monolog
+     * @param ConfigInterface $config
+     * @param Message $message
+     * @param StoreManager $storeManager
+     * @param TransportInterface $transportInterface
+     * @param array $settings
+     * @throws FileSystemException
+     */
     public function __construct(
-        \Edg\Erp\Helper\Data              $helper,
-        DirectoryList                     $directoryList,
-        Monolog                           $monolog,
-        ConfigInterface                   $config,
-        Message                           $message,
-        \Magento\Store\Model\StoreManager $storeManager,
-                                          $settings = []
+        Data $helper,
+        DirectoryList $directoryList,
+        Monolog $monolog,
+        ConfigInterface $config,
+        Message $message,
+        StoreManager $storeManager,
+        TransportInterface $transportInterface,
+        array $settings = []
     )
     {
-        $this->monolog = $monolog;
         $this->helper = $helper;
         $this->config = $config;
+        $this->monolog = $monolog;
         $this->email = $message;
         $this->storeManager = $storeManager;
+        $this->transportInterface = $transportInterface;
 
         $this->_exportDir = $directoryList->getPath(DirectoryList::VAR_DIR) . "/webservice/orderupload";
         $this->_importDir = $directoryList->getPath(DirectoryList::VAR_DIR) . "/webservice/orderstatus";
@@ -177,20 +217,21 @@ abstract class AbstractCron
 
         $mail = $this->email;
         $mail
-            ->setMessageType(Message::TYPE_TEXT)
             ->addTo($email)
             ->setFrom(
                 $this->helper->getSystemConfigSetting('trans_email/ident_general/email'),
                 $this->helper->getSystemConfigSetting('trans_email/ident_general/name')
-            )->setBodyText($content)
+            )->setBody($content)
             ->setSubject($subject);
 
         try {
-            $mail->send();
+            $this->transportInterface->sendMessage($mail);
         } catch (\Exception $e) {
             $this->moduleLog('unable to send PIM error email ' . $e->getMessage() . ', ' . $subject . ', ' . $content,
                 Logger::ERROR);
         }
+
+
 
         $this->config->saveConfig('bold/bold_release/last_sent_error_email', time(), 'default', 0);
 
@@ -208,7 +249,7 @@ abstract class AbstractCron
      * @param int $priority
      * @param array $params
      */
-    protected function serviceLog($message, $priority = Logger::INFO, $params = [])
+    protected function serviceLog($message, int $priority = Logger::INFO, array $params = [])
     {
         if (!in_array($priority, $this->loglevels)) {
             $priority = Logger::INFO;
