@@ -6,6 +6,9 @@ use Edg\Erp\Helper\ArticleType;
 use Edg\Erp\Helper\Data;
 use Edg\Erp\Model\Convert\OrderToDataModel;
 use Exception;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
@@ -79,6 +82,10 @@ class OrderExport extends AbstractCron
         parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
     public function execute()
     {
         // TODO: Implement execute() method.
@@ -94,10 +101,17 @@ class OrderExport extends AbstractCron
         }
     }
 
-    protected function prepareExport($force = false): OrderExport
+    /**
+     * @param bool $force
+     * @return $this
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws Exception
+     */
+    protected function prepareExport(bool $force = false): OrderExport
     {
         $date = date("Y_m_d");
-//        $this->addLogStreamToServiceLogger($this->_exportDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
+        $stream = $this->addLogStreamToServiceLogger($this->_exportDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
 
         if (!isset($this->settings['order_id'])) {
             $orders = [];
@@ -106,7 +120,7 @@ class OrderExport extends AbstractCron
 
             $orderPaymentStatuses = $this->helper->getOrderStatusesAndPaymentCodeToExport();
 
-            $this->serviceLog('Start Export Orders');
+            $this->serviceLog($stream, 'Start Export Orders');
 
             $this->moduleLog('*** start order export (multiple orders)', true);
 
@@ -127,10 +141,6 @@ class OrderExport extends AbstractCron
                 /** @var Order $order */
                 foreach ($collection as $order) {
                     try {
-                        $this->sendErrorMail(
-                            $this->getErrorEmail(),
-                            "Error when exporting order #{$order->getIncrementId()}."
-                        );
                         $paymentMethodCode = $order->getPayment()->getMethodInstance()->getCode();
                         $matchFound = false;
                         foreach ($orderPaymentStatuses as $status) {
@@ -150,9 +160,14 @@ class OrderExport extends AbstractCron
 
                         $this->moduleLog(__METHOD__ . ' Error exporting order #' . $order->getIncrementId() . ' ' . $e->getMessage());
 
+                        $this->sendErrorMail(
+                            $this->getErrorEmail(),
+                            'Exception occured during order export to EDG',
+                            "Error when exporting order #{$order->getIncrementId()}."
+                        );
 
 
-                        $this->serviceLog('Finished export with exception.', \Monolog\Logger::ERROR);
+                        $this->serviceLog($stream, 'Finished export with exception.', \Monolog\Logger::ERROR);
                         return $this;
                     }
                 }
@@ -162,21 +177,22 @@ class OrderExport extends AbstractCron
 
         } else {
             $orderId = $this->settings['order_id'];
-            $this->serviceLog("Start Export Order #" . $orderId);
+            $this->serviceLog($stream, "Start Export Order #" . $orderId);
             $this->exportOrder($orderId, $force);
         }
 
-        $this->serviceLog('Finished Export Orders');
+        $this->serviceLog($stream, 'Finished Export Orders');
         $this->moduleLog('Finished orderexport');
 
         return $this;
     }
 
     /**
-     * @param String|Order $orderId
-     * @return void
-     * @throws Exception
+     * @param $orderId
+     * @return $this
      * @throws NoSuchEntityException
+     * @throws AlreadyExistsException
+     * @throws InputException
      */
     protected function exportOrder($orderId)
     {
@@ -199,7 +215,6 @@ class OrderExport extends AbstractCron
         $orderData = $this->orderConverter->convert($order, $this->helper->getConfigSetting('export_order_type'),
             $this->helper->getEnvironmentTag());
 
-        var_dump($orderData);die();
         $responses = $client->pushNewOrder($orderData, [
             'export_type' => $this->helper->getConfigSetting('export_order_type'),
             'environment' => $this->helper->getEnvironmentTag()

@@ -3,17 +3,23 @@
 namespace Edg\Erp\Cron\API;
 
 use Edg\Erp\Helper\Data;
-use Magento\Framework\Mail\TransportInterface;
+use Edg\ErpService\DataModel\OrderStatus;
+use Exception;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\DB\Transaction;
 use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Logger\Monolog;
-use Laminas\Mail\Message;
+use Magento\Framework\Mail\Template\TransportBuilder;
+use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\ShipmentSender;
+use Magento\Sales\Model\Order\Shipment;
 use Magento\Sales\Model\Order\ShipmentFactory;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Store\Model\StoreManager;
+use Monolog\Logger;
 
 class OrderStatusImport extends AbstractCron
 {
@@ -23,22 +29,22 @@ class OrderStatusImport extends AbstractCron
     /**
      * @var OrderFactory
      */
-    protected $orderFactory;
+    protected OrderFactory $orderFactory;
 
     /**
      * @var ShipmentFactory
      */
-    protected $shipmentFactory;
+    protected ShipmentFactory $shipmentFactory;
 
     /**
      * @var Transaction
      */
-    protected $transaction;
+    protected Transaction $transaction;
 
     /**
      * @var ShipmentSender
      */
-    protected $shipmentMailer;
+    protected ShipmentSender $shipmentMailer;
 
     /**
      * @var Monolog
@@ -46,12 +52,16 @@ class OrderStatusImport extends AbstractCron
     protected Monolog $monolog;
 
     /**
+     * @var TransportBuilder
+     */
+    protected TransportBuilder $transportBuilder;
+
+    /**
      * @param Data $helper
      * @param DirectoryList $directoryList
      * @param Monolog $monolog
      * @param ConfigInterface $config
-     * @param Message $message
-     * @param TransportInterface $transportInterface
+     * @param TransportBuilder $transportBuilder
      * @param StoreManager $storeManager
      * @param OrderFactory $orderFactory
      * @param ShipmentFactory $shipmentFactory
@@ -65,8 +75,7 @@ class OrderStatusImport extends AbstractCron
         DirectoryList $directoryList,
         Monolog $monolog,
         ConfigInterface $config,
-        Message $message,
-        TransportInterface $transportInterface,
+        TransportBuilder $transportBuilder,
         StoreManager $storeManager,
         OrderFactory $orderFactory,
         ShipmentFactory $shipmentFactory,
@@ -74,7 +83,7 @@ class OrderStatusImport extends AbstractCron
         ShipmentSender $sender,
         array $settings = []
     ) {
-        parent::__construct($helper, $directoryList, $monolog, $config, $message, $storeManager, $transportInterface, $settings);
+        parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
         $this->orderFactory = $orderFactory;
         $this->shipmentFactory = $shipmentFactory;
         $this->transaction = $transaction;
@@ -88,11 +97,15 @@ class OrderStatusImport extends AbstractCron
         }
     }
 
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
     protected function prepareImport()
     {
         $date = date("Y_m_d");
-        $this->addLogStreamToServiceLogger($this->_importDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
-        $this->serviceLog('Start import');
+        $stream = $this->addLogStreamToServiceLogger($this->_importDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
+        $this->serviceLog($stream, 'Start import');
 
         $shippedStatus = $this->helper->getOrderImportStatusAfterShipping();
         $environment = $this->helper->getEnvironmentTag();
@@ -107,19 +120,19 @@ class OrderStatusImport extends AbstractCron
             }
             $orders = $response->getOrders();
             foreach ($orders as $order) {
-                $this->serviceLog('starting import for order with order number: #' . $order->getOrderNumber());
+                $this->serviceLog($stream,'starting import for order with order number: #' . $order->getOrderNumber());
                 $orderIncrementId = $this->formatIncrementId($order->getOrderNumber());
                 try {
                     $magentoOrder = $this->orderFactory->create()->loadByIncrementId($orderIncrementId);
 
                     if (!$magentoOrder->getId()) {
-                        $this->serviceLog("Order " . $orderIncrementId . " can not be found\n");
+                        $this->serviceLog($stream, "Order " . $orderIncrementId . " can not be found\n");
                         $this->moduleLog('WARNING: Order #' . $orderIncrementId . ' cannot be found.');
                         continue;
                     }
 
-                    if ($order->getOrderStatus() == \Edg\ErpService\DataModel\OrderStatus::STATUS_NOT_SHIPPED) {
-                        $this->serviceLog("Order " . $orderIncrementId . " is not shipped, no need to update \n");
+                    if ($order->getOrderStatus() == OrderStatus::STATUS_NOT_SHIPPED) {
+                        $this->serviceLog($stream, "Order " . $orderIncrementId . " is not shipped, no need to update \n");
                         continue;
                     }
 
@@ -134,10 +147,10 @@ class OrderStatusImport extends AbstractCron
                         ];
                     }
 
-                    $this->serviceLog("Creating shipment for order #" . $magentoOrder->getIncrementId() . " with items " . print_r($itemsToShip,
+                    $this->serviceLog($stream, "Creating shipment for order #" . $magentoOrder->getIncrementId() . " with items " . print_r($itemsToShip,
                             true));
 
-                    /** @var \Magento\Sales\Model\Order\Shipment $shipment */
+                    /** @var Shipment $shipment */
                     $shipment = $this->shipmentFactory->create($magentoOrder, $itemsToShip, $tracks);
                     $shipment->register();
 
@@ -162,8 +175,8 @@ class OrderStatusImport extends AbstractCron
                         $this->moduleLog('Bypassing shipment email notification for #' . $magentoOrder->getIncrementId());
                     }
 
-                    $this->serviceLog("Order #" . $magentoOrder->getIncrementId() . " saved successfully with status " . $magentoOrder->getStatus());
-                } catch (\Exception $e) {
+                    $this->serviceLog($stream, "Order #" . $magentoOrder->getIncrementId() . " saved successfully with status " . $magentoOrder->getStatus());
+                } catch (Exception $e) {
 
                     if (stripos($e->getMessage(),
                             'Expectation failed') !== false
@@ -171,8 +184,8 @@ class OrderStatusImport extends AbstractCron
                         throw $e;
                     }
 
-                    $this->serviceLog("Order " . $orderIncrementId . " failed import", \Zend\Log\Logger::ERR);
-                    $this->serviceLog($e->getMessage(), \Zend\Log\Logger::ERR);
+                    $this->serviceLog($stream, "Order " . $orderIncrementId . " failed import", Logger::ERROR);
+                    $this->serviceLog($stream, $e->getMessage(), Logger::ERROR);
 
                     $this->moduleLog('WARNING: Order ' . $orderIncrementId . ' failed import');
                     $this->moduleLog($e->getMessage());
@@ -191,6 +204,7 @@ class OrderStatusImport extends AbstractCron
      *
      * @param $id
      * @return string
+     * @throws Exception
      */
     protected function formatIncrementId($id)
     {
@@ -202,19 +216,19 @@ class OrderStatusImport extends AbstractCron
 
         $newId = sprintf($newPattern, $id);
         if (strlen($newId) != strlen($id)) {
-            $this->serviceLog(sprintf('Transforming Order increment id from %s to %s', $id, $newId));
+            $this->serviceLog(null, sprintf('Transforming Order increment id from %s to %s', $id, $newId));
         }
         return $newId;
     }
 
     /**
-     * @param \Magento\Sales\Model\Order $magentoOrder
-     * @param \Edg\ErpService\DataModel\OrderStatus $importData
+     * @param Order $magentoOrder
+     * @param OrderStatus $importData
      * @return array
      */
     protected function getItemsToShip(
-        \Magento\Sales\Model\Order $magentoOrder,
-        \Edg\ErpService\DataModel\OrderStatus $importData
+        Order $magentoOrder,
+        OrderStatus $importData
     ) {
         $items = [];
 
@@ -267,10 +281,11 @@ class OrderStatusImport extends AbstractCron
     /**
      * Save shipment and order in one transaction
      *
-     * @param \Magento\Sales\Model\Order\Shipment $shipment
+     * @param Shipment $shipment
      * @return $this
+     * @throws Exception
      */
-    protected function saveShipment($shipment)
+    protected function saveShipment($shipment): OrderStatusImport
     {
         $shipment->getOrder()->setIsInProcess(true);
         $transaction = $this->transaction;

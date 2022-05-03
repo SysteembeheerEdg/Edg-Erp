@@ -3,7 +3,6 @@
 namespace Edg\Erp\Cron\API;
 
 use Edg\Erp\Helper\Data;
-use Magento\Framework\Mail\TransportInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
@@ -13,7 +12,9 @@ use Magento\CatalogRule\Model\Rule\Job;
 use Magento\Framework\App\Cache;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Laminas\Mail\Message;
+use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Logger\Monolog;
 use Magento\Store\Model\StoreManager;
@@ -34,6 +35,11 @@ class ArticleInfo extends AbstractCron
      * @var TierPriceManagement
      */
     protected TierPriceManagement $tierpriceManagement;
+
+    /**
+     * @var TransportBuilder
+     */
+    protected TransportBuilder $transportBuilder;
 
     /**
      * @var Job
@@ -66,8 +72,7 @@ class ArticleInfo extends AbstractCron
      * @param DirectoryList $directoryList
      * @param Monolog $monolog
      * @param ConfigInterface $config
-     * @param Message $message
-     * @param TransportInterface $transportInterface
+     * @param TransportBuilder $transportBuilder
      * @param StoreManager $storeManager
      * @param ProductRepositoryInterface $productRepository
      * @param StockRegistryInterface $stockRegistryInterface
@@ -82,8 +87,7 @@ class ArticleInfo extends AbstractCron
         DirectoryList $directoryList,
         Monolog $monolog,
         ConfigInterface $config,
-        Message $message,
-        TransportInterface $transportInterface,
+        TransportBuilder $transportBuilder,
         StoreManager $storeManager,
         ProductRepositoryInterface $productRepository,
         StockRegistryInterface $stockRegistryInterface,
@@ -97,7 +101,7 @@ class ArticleInfo extends AbstractCron
         $this->tierpriceManagement = $tierPriceManagement;
         $this->catalogRuleJob = $catalogRuleJob;
         $this->cache = $cache;
-        parent::__construct($helper, $directoryList, $monolog, $config, $message, $storeManager, $transportInterface, $settings);
+        parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
     public function execute()
@@ -238,7 +242,7 @@ class ArticleInfo extends AbstractCron
             } catch (\Exception $e) {
                 $this->moduleLog(__METHOD__ . '() - WARNING: Errors attemping to update product with sku "' . $productdata['sku'] . '": ' . $e->getMessage());
             }
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+        } catch (NoSuchEntityException $e) {
             $this->moduleLog(__METHOD__ . '() - WARNING: Product "' . $sku . '" failed to load.');
         } catch (\Exception $e) {
             $this->moduleLog(__METHOD__ . '() - WARNING: Errors attemping to update product with sku "' . $productdata['sku'] . '": ' . $e->getMessage());
@@ -352,8 +356,8 @@ class ArticleInfo extends AbstractCron
      * @param ProductInterface $product
      * @param \Edg\ErpService\DataModel\ArticleInfo $article
      * @return $this|bool
-     * @throws \Magento\Framework\Exception\CouldNotSaveException
-     * @throws \Magento\Framework\Exception\InputException
+     * @throws CouldNotSaveException
+     * @throws NoSuchEntityException
      */
     protected function updateProductPriceTiers(
         ProductInterface $product,
