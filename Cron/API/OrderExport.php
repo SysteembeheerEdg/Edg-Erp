@@ -5,13 +5,15 @@ namespace Edg\Erp\Cron\API;
 use Edg\Erp\Helper\ArticleType;
 use Edg\Erp\Helper\Data;
 use Edg\Erp\Model\Convert\OrderToDataModel;
-use Magento\Framework\Mail\TransportInterface;
+use Exception;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Laminas\Mail\Message;
+use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Logger\Monolog;
 use Magento\Framework\Phrase;
+use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\StoreManager;
@@ -29,6 +31,11 @@ class OrderExport extends AbstractCron
     protected OrderToDataModel $orderConverter;
 
     /**
+     * @var TransportBuilder
+     */
+    protected TransportBuilder $transportBuilder;
+
+    /**
      * @var OrderRepository
      */
     protected OrderRepository $orderRepository;
@@ -43,8 +50,7 @@ class OrderExport extends AbstractCron
      * @param DirectoryList $directoryList
      * @param Monolog $monolog
      * @param ConfigInterface $config
-     * @param TransportInterface $transportInterface
-     * @param Message $message
+     * @param TransportBuilder $transportBuilder
      * @param StoreManager $storeManager
      * @param OrderFactory $orderFactory
      * @param OrderToDataModel $orderConverter
@@ -58,8 +64,7 @@ class OrderExport extends AbstractCron
         DirectoryList $directoryList,
         Monolog $monolog,
         ConfigInterface $config,
-        TransportInterface $transportInterface,
-        Message $message,
+        TransportBuilder $transportBuilder,
         StoreManager $storeManager,
         OrderFactory $orderFactory,
         OrderToDataModel $orderConverter,
@@ -71,7 +76,7 @@ class OrderExport extends AbstractCron
         $this->orderConverter = $orderConverter;
         $this->orderRepository = $orderRepository;
         $this->articleTypeHelper = $articleTypeHelper;
-        parent::__construct($helper, $directoryList, $monolog, $config, $message, $storeManager, $transportInterface, $settings);
+        parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
     public function execute()
@@ -89,10 +94,10 @@ class OrderExport extends AbstractCron
         }
     }
 
-    protected function prepareExport($force = false)
+    protected function prepareExport($force = false): OrderExport
     {
         $date = date("Y_m_d");
-        $this->addLogStreamToServiceLogger($this->_exportDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
+//        $this->addLogStreamToServiceLogger($this->_exportDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
 
         if (!isset($this->settings['order_id'])) {
             $orders = [];
@@ -119,9 +124,13 @@ class OrderExport extends AbstractCron
             while ($currentPage <= $pages) {
                 $collection->setCurPage($currentPage);
 
-                /** @var \Magento\Sales\Model\Order $order */
+                /** @var Order $order */
                 foreach ($collection as $order) {
                     try {
+                        $this->sendErrorMail(
+                            $this->getErrorEmail(),
+                            "Error when exporting order #{$order->getIncrementId()}."
+                        );
                         $paymentMethodCode = $order->getPayment()->getMethodInstance()->getCode();
                         $matchFound = false;
                         foreach ($orderPaymentStatuses as $status) {
@@ -135,17 +144,13 @@ class OrderExport extends AbstractCron
                         if ($matchFound) {
                             $this->exportOrder($order);
                         }
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         $this->serviceLog('Error when exporting order #' . $order->getIncrementId() . ' - ' . $e->getMessage(),
                             \Monolog\Logger::ERROR);
 
                         $this->moduleLog(__METHOD__ . ' Error exporting order #' . $order->getIncrementId() . ' ' . $e->getMessage());
 
-                        $this->sendErrorMail(
-                            $this->getErrorEmail(),
-                            'Exception occured during order export to EDG',
-                            "Error when exporting order #{$order->getIncrementId()}. " . $e->getMessage()
-                        );
+
 
                         $this->serviceLog('Finished export with exception.', \Monolog\Logger::ERROR);
                         return $this;
@@ -168,22 +173,24 @@ class OrderExport extends AbstractCron
     }
 
     /**
-     * @param String|\Magento\Sales\Model\Order $orderId
-     * @return $this
-     * @throws \Exception
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @param String|Order $orderId
+     * @return void
+     * @throws Exception
+     * @throws NoSuchEntityException
      */
     protected function exportOrder($orderId)
     {
-        if ($orderId instanceof \Magento\Sales\Model\Order) {
+        if ($orderId instanceof Order) {
             $order = $orderId;
         } elseif (is_string($orderId)) {
             $order = $this->orderFactory->create()->loadByIncrementId($orderId);
             if (!$order->getId()) {
-                throw new \Magento\Framework\Exception\NoSuchEntityException(new Phrase('Order Export: could not load order ' . $orderId . '"'));
+                throw new NoSuchEntityException(
+                    new Phrase('Order Export: could not load order ' . $orderId . '"')
+                );
             }
         } else {
-            throw new \Exception('order id param should be a string or an instance of magento\\sales\\model\\order');
+            throw new Exception('order id param should be a string or an instance of magento\\sales\\model\\order');
         }
         $hasErrors = false;
 
@@ -192,6 +199,7 @@ class OrderExport extends AbstractCron
         $orderData = $this->orderConverter->convert($order, $this->helper->getConfigSetting('export_order_type'),
             $this->helper->getEnvironmentTag());
 
+        var_dump($orderData);die();
         $responses = $client->pushNewOrder($orderData, [
             'export_type' => $this->helper->getConfigSetting('export_order_type'),
             'environment' => $this->helper->getEnvironmentTag()

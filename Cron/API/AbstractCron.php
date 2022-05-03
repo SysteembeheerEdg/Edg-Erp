@@ -6,14 +6,17 @@ use Edg\Erp\Helper\Data;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Logger\Monolog;
-use Laminas\Mail\Message;
-use Magento\Framework\Mail\TransportInterface;
+use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Store\Model\StoreManager;
 use Monolog\Logger;
 
 abstract class AbstractCron
 {
+    const ERROR_EMAIL_TEMPLATE = 'error_email';
+
     protected array $loglevels = [
         Logger::EMERGENCY,
         Logger::ALERT,
@@ -41,19 +44,14 @@ abstract class AbstractCron
     protected ConfigInterface $config;
 
     /**
-     * @var Message
+     * @var TransportBuilder
      */
-    protected Message $email;
+    protected TransportBuilder $transportBuilder;
 
     /**
      * @var StoreManager
      */
     protected StoreManager $storeManager;
-
-    /**
-     * @var TransportInterface
-     */
-    protected TransportInterface $transportInterface;
 
     /**
      * @var string|null
@@ -90,9 +88,8 @@ abstract class AbstractCron
      * @param DirectoryList $directoryList
      * @param Monolog $monolog
      * @param ConfigInterface $config
-     * @param Message $message
+     * @param TransportBuilder $transportBuilder
      * @param StoreManager $storeManager
-     * @param TransportInterface $transportInterface
      * @param array $settings
      * @throws FileSystemException
      */
@@ -101,18 +98,16 @@ abstract class AbstractCron
         DirectoryList $directoryList,
         Monolog $monolog,
         ConfigInterface $config,
-        Message $message,
+        TransportBuilder $transportBuilder,
         StoreManager $storeManager,
-        TransportInterface $transportInterface,
         array $settings = []
     )
     {
         $this->helper = $helper;
         $this->config = $config;
         $this->monolog = $monolog;
-        $this->email = $message;
+        $this->transportBuilder = $transportBuilder;
         $this->storeManager = $storeManager;
-        $this->transportInterface = $transportInterface;
 
         $this->_exportDir = $directoryList->getPath(DirectoryList::VAR_DIR) . "/webservice/orderupload";
         $this->_importDir = $directoryList->getPath(DirectoryList::VAR_DIR) . "/webservice/orderstatus";
@@ -124,7 +119,7 @@ abstract class AbstractCron
         $this->_checkPrerequisites();
     }
 
-    protected function initDefaultSettings($settings)
+    protected function initDefaultSettings($settings): array
     {
         return array_merge([
             'force_order_upload' => false/** @see \Edg\Erp\Cron\API\OrderExport */,
@@ -136,7 +131,7 @@ abstract class AbstractCron
     /**
      * Make sure all logging directories are present
      */
-    protected function _checkPrerequisites()
+    protected function _checkPrerequisites(): AbstractCron
     {
 
         $dirs = [
@@ -164,7 +159,7 @@ abstract class AbstractCron
      * @param bool $debug
      * @return $this
      */
-    protected function moduleLog($msg, $debug = false)
+    protected function moduleLog($msg, bool $debug = false): AbstractCron
     {
         if ($this->_logOutputEnabled === true) {
             if (php_sapi_name() !== 'cli') {
@@ -181,15 +176,6 @@ abstract class AbstractCron
     public abstract function execute();
 
     /**
-     *
-     */
-    public function enabledLogOutput()
-    {
-        $this->_logOutputEnabled = true;
-        return $this;
-    }
-
-    /**
      * Retrieve email to send error report to
      */
     public function getErrorEmail()
@@ -200,49 +186,59 @@ abstract class AbstractCron
     /**
      * #192: ERP koppeling - Rate limiter maken voor exception-emails
      * @param String $email
-     * @param String $subject
      * @param String $content
      * @return $this
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
      */
-    public function sendErrorMail($email, $subject, $content)
+    public function sendErrorMail(string $email, string $content): AbstractCron
     {
         $lastSentErrorEmail = $this->helper->getSystemConfigSetting('bold/bold_release/last_sent_error_email');
 
-        // Skip procedure if last sent error email is sent more then one hour ago (60 sec * 60 min)
+        // Skip procedure if last sent error email is sent more then one hour ago (60 * 60 sec)
         if (($lastSentErrorEmail + (60 * 60)) > time()) {
             $this->moduleLog('Email exception suppressed.');
             return $this;
         }
 
-        $mail = $this->email;
-        $mail
-            ->addTo($email)
-            ->setFrom(
-                $this->helper->getSystemConfigSetting('trans_email/ident_general/email'),
-                $this->helper->getSystemConfigSetting('trans_email/ident_general/name')
-            )->setBody($content)
-            ->setSubject($subject);
+            $storeId = $this->storeManager->getStore()->getId();
 
-        try {
-            $this->transportInterface->sendMessage($mail);
-        } catch (\Exception $e) {
-            $this->moduleLog('unable to send PIM error email ' . $e->getMessage() . ', ' . $subject . ', ' . $content,
+            $from = [
+                'email' => $this->helper->getSystemConfigSetting('trans_email/ident_general/email'),
+                'name' => $this->helper->getSystemConfigSetting('trans_email/ident_general/name')
+            ];
+
+            $templateOptions = [
+                'area' => \Magento\Framework\App\Area::AREA_FRONTEND,
+                'store' => $storeId
+            ];
+
+            try {
+            $transport = $this->transportBuilder->setTemplateIdentifier(self::ERROR_EMAIL_TEMPLATE)
+                ->setTemplateOptions($templateOptions)
+                ->setFrombyScope($from)
+                ->addTo($email)
+                ->setTemplateVars(['message' => $content])
+                ->getTransport();
+
+            $transport->sendMessage();
+            } catch (\Exception $e) {
+                $this->moduleLog('unable to send PIM error email ' . $e->getMessage() . ', ' . 'Exception occured during order export to EDG' . ', ' . $content,
                 Logger::ERROR);
         }
-
 
 
         $this->config->saveConfig('bold/bold_release/last_sent_error_email', time(), 'default', 0);
 
         $this->storeManager->getStore()->resetConfig();
+
         return $this;
     }
 
     /**
      * write to an api service specific log file.
      *
-     * writes log message to to a file. first call addLogStreamToServiceLogger to set a log writer.
+     * writes log message to a file. first call addLogStreamToServiceLogger to set a log writer.
      * If no log writer is set, STDERR will be used to log messages.
      *
      * @param $message

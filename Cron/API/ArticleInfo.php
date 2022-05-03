@@ -123,7 +123,7 @@ class ArticleInfo extends AbstractCron
         $this->apiMessages = $response;
     }
 
-    protected function processProductUpdates()
+    protected function processProductUpdates(): array
     {
         $messages = [];
 
@@ -253,7 +253,7 @@ class ArticleInfo extends AbstractCron
      * @param \Edg\ErpService\DataModel\ArticleInfo $article
      * @return $this
      */
-    protected function updateProductStatus(ProductInterface $product, \Edg\ErpService\DataModel\ArticleInfo $article)
+    protected function updateProductStatus(ProductInterface $product, \Edg\ErpService\DataModel\ArticleInfo $article): ArticleInfo
     {
         $orderable = $article->getOrderable();
 
