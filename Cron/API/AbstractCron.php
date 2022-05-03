@@ -3,12 +3,15 @@
 namespace Edg\Erp\Cron\API;
 
 use Edg\Erp\Helper\Data;
+use Exception;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Logger\Monolog;
+use Monolog\Handler\StreamHandler;
+use Monolog\Handler\FirePHPHandler;
 use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Store\Model\StoreManager;
 use Monolog\Logger;
@@ -213,16 +216,16 @@ abstract class AbstractCron
                 'store' => $storeId
             ];
 
-            try {
-            $transport = $this->transportBuilder->setTemplateIdentifier(self::ERROR_EMAIL_TEMPLATE)
-                ->setTemplateOptions($templateOptions)
-                ->setFrombyScope($from)
-                ->addTo($email)
-                ->setTemplateVars(['message' => $content])
-                ->getTransport();
+        $transport = $this->transportBuilder->setTemplateIdentifier(self::ERROR_EMAIL_TEMPLATE)
+            ->setTemplateOptions($templateOptions)
+            ->setFrombyScope($from)
+            ->addTo($email)
+            ->setTemplateVars(['message' => $content])
+            ->getTransport();
 
-            $transport->sendMessage();
-            } catch (\Exception $e) {
+            try {
+                $transport->sendMessage();
+            } catch (Exception $e) {
                 $this->moduleLog('unable to send PIM error email ' . $e->getMessage() . ', ' . 'Exception occured during order export to EDG' . ', ' . $content,
                 Logger::ERROR);
         }
@@ -241,17 +244,37 @@ abstract class AbstractCron
      * writes log message to a file. first call addLogStreamToServiceLogger to set a log writer.
      * If no log writer is set, STDERR will be used to log messages.
      *
+     * @param $logger
      * @param $message
      * @param int $priority
      * @param array $params
+     * @throws Exception
      */
-    protected function serviceLog($message, int $priority = Logger::INFO, array $params = [])
+    protected function serviceLog($logger, $message, int $priority = Logger::INFO, array $params = [])
     {
         if (!in_array($priority, $this->loglevels)) {
             $priority = Logger::INFO;
         }
 
-        $this->monolog->log($priority, $message, $params);
+        if (!$logger) {
+            $this->addLogStreamToServiceLogger('php://stderr');
+        }
+
+        $logger->log($priority, $message, $params);
+    }
+
+    /**
+     * @param $path
+     * @return Logger
+     * @throws Exception
+     */
+    protected function addLogStreamToServiceLogger($path): Logger
+    {
+        $logger = new Logger('app');
+
+        $logger->pushHandler(new StreamHandler($path));
+
+        return $logger;
     }
 
 }
