@@ -193,8 +193,9 @@ class OrderExport extends AbstractCron
      * @throws NoSuchEntityException
      * @throws AlreadyExistsException
      * @throws InputException
+     * @throws Exception
      */
-    protected function exportOrder($orderId)
+    protected function exportOrder($orderId): OrderExport
     {
         if ($orderId instanceof Order) {
             $order = $orderId;

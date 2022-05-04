@@ -3,11 +3,13 @@
 namespace Edg\Erp\Cron\API;
 
 use Edg\Erp\Helper\Data;
+use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogInventory\Api\StockStatusRepositoryInterface;
+use Magento\CatalogInventory\Api\StockItemRepositoryInterface;
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\Catalog\Model\Product\TierPriceManagement;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\CatalogRule\Model\Rule\Job;
 use Magento\Framework\App\Cache;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
@@ -27,9 +29,14 @@ class ArticleInfo extends AbstractCron
     protected ProductRepositoryInterface $productRepository;
 
     /**
-     * @var StockRegistryInterface
+     * @var StockStatusRepositoryInterface
      */
-    protected StockRegistryInterface $stockRegistry;
+    protected StockStatusRepositoryInterface $stockStatusRepository;
+
+    /**
+     * @var StockItemRepositoryInterface
+     */
+    protected StockItemRepositoryInterface $stockItemRepository;
 
     /**
      * @var TierPriceManagement
@@ -75,7 +82,8 @@ class ArticleInfo extends AbstractCron
      * @param TransportBuilder $transportBuilder
      * @param StoreManager $storeManager
      * @param ProductRepositoryInterface $productRepository
-     * @param StockRegistryInterface $stockRegistryInterface
+     * @param StockStatusRepositoryInterface $stockStatusRepository
+     * @param StockItemRepositoryInterface $stockItemRepository
      * @param TierPriceManagement $tierPriceManagement
      * @param Job $catalogRuleJob
      * @param Cache $cache
@@ -90,14 +98,16 @@ class ArticleInfo extends AbstractCron
         TransportBuilder $transportBuilder,
         StoreManager $storeManager,
         ProductRepositoryInterface $productRepository,
-        StockRegistryInterface $stockRegistryInterface,
+        StockStatusRepositoryInterface $stockStatusRepository,
+        StockItemRepositoryInterface $stockItemRepository,
         TierPriceManagement $tierPriceManagement,
         Job $catalogRuleJob,
         Cache $cache,
         array $settings = []
     ) {
         $this->productRepository = $productRepository;
-        $this->stockRegistry = $stockRegistryInterface;
+        $this->stockStatusRepository = $stockStatusRepository;
+        $this->stockItemRepository = $stockItemRepository;
         $this->tierpriceManagement = $tierPriceManagement;
         $this->catalogRuleJob = $catalogRuleJob;
         $this->cache = $cache;
@@ -115,7 +125,7 @@ class ArticleInfo extends AbstractCron
                 $this->catalogRuleJob->applyAll();
                 $this->cache->remove('catalog_rules_dirty');
                 $this->moduleLog(__METHOD__ . '(); - ' . __('The rules have been applied.'), true);
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 $this->moduleLog(__METHOD__ . '(); - ' . __('Unable to apply rules.'), true);
                 $this->moduleLog(__METHOD__ . '(); - ' . $exception->getMessage(), true);
             }
@@ -239,12 +249,12 @@ class ArticleInfo extends AbstractCron
 
             try {
                 $this->productRepository->save($product);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->moduleLog(__METHOD__ . '() - WARNING: Errors attemping to update product with sku "' . $productdata['sku'] . '": ' . $e->getMessage());
             }
         } catch (NoSuchEntityException $e) {
             $this->moduleLog(__METHOD__ . '() - WARNING: Product "' . $sku . '" failed to load.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->moduleLog(__METHOD__ . '() - WARNING: Errors attemping to update product with sku "' . $productdata['sku'] . '": ' . $e->getMessage());
             $this->moduleLog($e->getTraceAsString(), true);
         }
@@ -296,34 +306,39 @@ class ArticleInfo extends AbstractCron
      * @param ProductInterface $product
      * @param \Edg\ErpService\DataModel\ArticleInfo $article
      * @return $this
+     * @throws Exception
      */
     protected function updateProductStockSettings(
         ProductInterface $product,
         \Edg\ErpService\DataModel\ArticleInfo $article
-    ) {
-        $stock = $this->stockRegistry->getStockItem($product->getId());
-        if ($stock->getItemId()) {
+    ): ArticleInfo
+    {
+        $stockItem = $this->stockItemRepository->get($product->getExtensionAttributes()->getStockItem()->getItemId());
+        $stockStatus = $this->stockStatusRepository->get($stockItem->getItemId());
+
+        if ($stockItem && $stockStatus) {
             $sku = $product->getSku();
             $newQty = $article->getAvailable();
             $newBackorders = ($article->getBackorder() == \Edg\ErpService\DataModel\ArticleInfo::BACKORDER_TRUE) ? 1 : 0;
-            $oldBackorders = $stock->getBackorders();
+            $oldBackorders = $stockItem->getBackorders();
 
             $inStock = ($newQty > 0 || $newBackorders == 1) ? 1 : 0;
 
-            $productQtyAndStock = $product->getQuantityAndStockStatus();
+            $productQty = $stockStatus->getQty();
+            $productStockStatus = $stockStatus->getStockStatus();
 
-            if ($stock->getUseConfigBackorders() != 0) {
-                $stock->setUseConfigBackorders(false);
+            if ($stockItem->getUseConfigBackorders() != 0) {
+                $stockItem->setUseConfigBackorders(false);
             }
 
-            if ($stock->getQty() != $newQty) {
-                $stock->setQty($newQty);
-                $productQtyAndStock['qty'] = $newQty;
+            if ($stockStatus->getQty() != $newQty) {
+                $stockItem->setQty($newQty);
+                $productQty = $newQty;
             }
 
-            if ($stock->getIsInStock() != $inStock) {
-                $stock->setIsInStock($inStock);
-                $productQtyAndStock['is_in_stock'] = $inStock;
+            if ($stockItem->getIsInStock() != $inStock) {
+                $stockItem->setIsInStock($inStock);
+                $productStockStatus = $inStock;
             }
 
             $this->moduleLog(__METHOD__ . sprintf(
@@ -335,7 +350,7 @@ class ArticleInfo extends AbstractCron
             ), true);
 
             if ($newBackorders != $oldBackorders) {
-                $stock->setBackorders($newBackorders);
+                $stockItem->setBackorders($newBackorders);
                 $this->moduleLog(
                     __METHOD__ . ': Product #' . $sku . ': Backorder status "' . $oldBackorders . '" updated to "' . $newBackorders . '".',
                     true
@@ -343,9 +358,11 @@ class ArticleInfo extends AbstractCron
             } else {
                 $this->moduleLog(__METHOD__ . ': Product #' . $sku . ': No need for backorder update.', true);
             }
+            $stockItem->setQty($productQty);
+            $stockStatus->setStockStatus($productStockStatus);
 
-            $this->stockRegistry->updateStockItemBySku($sku, $stock);
-            $product->setQuantityAndStockStatus($productQtyAndStock);
+            $stockItem->save();
+            $this->stockStatusRepository->save($stockStatus);
         } else {
             $this->moduleLog(__METHOD__ . '() - WARNING: could not load stock model for product "' . $product->getSku() . '"');
         }
@@ -421,7 +438,7 @@ class ArticleInfo extends AbstractCron
                     $price,
                     $qty
                 );
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->moduleLog(__METHOD__ . '() - ERROR: could not save price tier for product #' . $product->getSku());
                 $this->moduleLog($e->getMessage());
             }
@@ -434,9 +451,10 @@ class ArticleInfo extends AbstractCron
         return $this;
     }
 
-    protected function updateProductTaxClass(ProductInterface $product, \Edg\ErpService\DataModel\ArticleInfo $article)
+    protected function updateProductTaxClass(ProductInterface $product, \Edg\ErpService\DataModel\ArticleInfo $article): ArticleInfo
     {
         $map = $this->helper->getTaxClassMapping();
+
         $rate = (string)(float)str_replace(',', '.', $article->getBtw());
 
         if (array_key_exists($rate, $map)) {
@@ -446,7 +464,9 @@ class ArticleInfo extends AbstractCron
                 $map[$rate],
                 $rate
             ), true);
+
             $product->setTaxClassId($map[$rate]);
+
         } else {
             $this->moduleLog(__METHOD__ . ': Product #' . $product->getSku() . ': WARNING: No matching tax_class_id for rate "' . $rate . '",');
         }
@@ -458,7 +478,7 @@ class ArticleInfo extends AbstractCron
      * @param String $sku
      * @return $this
      */
-    public function addSkuToSync($sku)
+    public function addSkuToSync(string $sku): ArticleInfo
     {
         $this->_skuList[] = $sku;
         return $this;
@@ -467,7 +487,7 @@ class ArticleInfo extends AbstractCron
     /**
      * @return array
      */
-    public function getApiMessages()
+    public function getApiMessages(): array
     {
         return $this->apiMessages;
     }

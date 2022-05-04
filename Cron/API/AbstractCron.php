@@ -8,6 +8,7 @@ use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\MailException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Logger\Monolog;
 use Magento\Framework\Mail\Template\TransportBuilder;
@@ -222,7 +223,11 @@ abstract class AbstractCron
             ->setTemplateOptions($templateOptions)
             ->setFrombyScope($from)
             ->addTo($email)
-            ->setTemplateVars(['message' => $content])
+            ->setTemplateVars(
+                [
+                    'message' => $content,
+                    'subject' => $subject
+                ])
             ->getTransport();
 
             try {

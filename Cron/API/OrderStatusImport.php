@@ -90,6 +90,10 @@ class OrderStatusImport extends AbstractCron
         $this->shipmentMailer = $sender;
     }
 
+    /**
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
     public function execute()
     {
         if ($this->helper->isPullOrdersEnabled()) {
@@ -100,6 +104,7 @@ class OrderStatusImport extends AbstractCron
     /**
      * @throws NoSuchEntityException
      * @throws LocalizedException
+     * @throws Exception
      */
     protected function prepareImport()
     {
@@ -159,6 +164,7 @@ class OrderStatusImport extends AbstractCron
                     $magentoOrder->setData("state", $status == "shipped" ? $shippedStatus : "processing");
                     $magentoOrder->addStatusToHistory(false, 'order status imported from progress');
 
+                    var_dump($magentoOrder);die();
                     $this->saveShipment($shipment);
 
                     $this->moduleLog(sprintf('Created shipment #%s (id %s) for order #%s (id %s)',
@@ -180,7 +186,8 @@ class OrderStatusImport extends AbstractCron
 
                     if (stripos($e->getMessage(),
                             'Expectation failed') !== false
-                    ) { //PHPUnit exception; must not be catched
+                    ) {
+                        //PHPUnit exception; must not be catched
                         throw $e;
                     }
 
@@ -206,7 +213,7 @@ class OrderStatusImport extends AbstractCron
      * @return string
      * @throws Exception
      */
-    protected function formatIncrementId($id)
+    protected function formatIncrementId($id): string
     {
         $pattern = \Magento\SalesSequence\Model\Sequence::DEFAULT_PATTERN;
         $pos1 = strpos($pattern, '%');
@@ -229,7 +236,8 @@ class OrderStatusImport extends AbstractCron
     protected function getItemsToShip(
         Order $magentoOrder,
         OrderStatus $importData
-    ) {
+    ): array
+    {
         $items = [];
 
         foreach ($importData->getOrderRows() as $orderrow) {
@@ -285,7 +293,7 @@ class OrderStatusImport extends AbstractCron
      * @return $this
      * @throws Exception
      */
-    protected function saveShipment($shipment): OrderStatusImport
+    protected function saveShipment(Shipment $shipment): OrderStatusImport
     {
         $shipment->getOrder()->setIsInProcess(true);
         $transaction = $this->transaction;
