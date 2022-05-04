@@ -231,10 +231,10 @@ class OrderExport extends AbstractCron
         if ($hasErrors === false) {
             $order->setPimIsExported(1);
             $order->setPimExportedAt(date('Y-m-d H:i:s'));
-            $order->addStatusHistoryComment(
+            $order->addCommentToStatusHistory(
                 sprintf('Succesfully exported order #%s  with message "%s", status "%s"', $order->getIncrementId(),
                     $response->getMessage(), $response->getStatus())
-                , false);
+            );
             $this->orderRepository->save($order);
 
             // Next, autoship non-shippable items

@@ -2,37 +2,46 @@
 
 namespace Edg\Erp\Model\Convert;
 
+use Exception;
+use Magento\Customer\Model\CustomerFactory;
+use Magento\Customer\Model\GroupFactory;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Address;
+use Magento\Sales\Model\Order\Item;
+use Magento\Sales\Model\Order\Status\History;
 use Magento\Store\Model\ScopeInterface;
 
 class OrderToDataModel
 {
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     * @var ScopeConfigInterface
      */
-    protected $storeConfig;
+    protected ScopeConfigInterface $storeConfig;
 
     /**
-     * @var \Magento\Customer\Model\GroupFactory
+     * @var GroupFactory
      */
-    protected $groupFactory;
+    protected GroupFactory $groupFactory;
 
     /**
-     * @var \Magento\Customer\Model\CustomerFactory
+     * @var CustomerFactory
      */
-    protected $customerFactory;
+    protected CustomerFactory $customerFactory;
 
     /**
-     *
+     * @var string[]
      */
-    protected $_exportCustomerFieldsMap = array(
+    protected array $_exportCustomerFieldsMap = array(
         'email' => 'email',
         'customer_group' => 'group_id'
     );
 
     /**
-     *
+     * @var array|string[]
      */
-    protected $_exportCustomerFieldsMapAwCa = array(
+    protected array $_exportCustomerFieldsMapAwCa = array(
         'progress_id',
         'school_naam',
         'brinnummer',
@@ -43,14 +52,14 @@ class OrderToDataModel
     /**
      * OrderToDataModel constructor.
      *
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $configInterface
-     * @param \Magento\Customer\Model\GroupFactory $groupFactory
-     * @param \Magento\Customer\Model\CustomerFactory $customerFactory
+     * @param ScopeConfigInterface $configInterface
+     * @param GroupFactory $groupFactory
+     * @param CustomerFactory $customerFactory
      */
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $configInterface,
-        \Magento\Customer\Model\GroupFactory $groupFactory,
-        \Magento\Customer\Model\CustomerFactory $customerFactory
+        ScopeConfigInterface $configInterface,
+        GroupFactory $groupFactory,
+        CustomerFactory $customerFactory
     ) {
         $this->storeConfig = $configInterface;
         $this->groupFactory = $groupFactory;
@@ -58,19 +67,21 @@ class OrderToDataModel
     }
 
     /**
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
+     * @param $exportOrderType
+     * @param $environment
      * @return \Edg\ErpService\DataModel\Order
+     * @throws Exception
      */
-    public function convert(\Magento\Sales\Model\Order $order, $exportOrderType, $environment = null)
+    public function convert(Order $order, $exportOrderType, $environment = null): \Edg\ErpService\DataModel\Order
     {
 
         $data = $this->orderToArray($order, $exportOrderType, $environment);
 
-        $datamodel = new \Edg\ErpService\DataModel\Order($data);
-        return $datamodel;
+        return new \Edg\ErpService\DataModel\Order($data);
     }
 
-    protected function orderToArray(\Magento\Sales\Model\Order $order, $exportOrderType, $environment = null)
+    protected function orderToArray(Order $order, $exportOrderType, $environment = null): array
     {
         $orderArray = $order->toArray(
             [
@@ -120,11 +131,11 @@ class OrderToDataModel
     }
 
     /**
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @param $data
      * @return $this
      */
-    protected function processStatusComments(\Magento\Sales\Model\Order $order, &$data)
+    protected function processStatusComments(Order $order, &$data): OrderToDataModel
     {
         $_history = $order->getAllStatusHistory();
         $_buffer = [];
@@ -139,7 +150,7 @@ class OrderToDataModel
 
         $_buffer[] = $order->getBoldOaRemarks();
 
-        /** @var \Magento\Sales\Model\Order\Status\History $_historyItem */
+        /** @var History $_historyItem */
         foreach ($_history as $_historyItem) {
             $comment = $_historyItem->getComment();
 
@@ -160,11 +171,11 @@ class OrderToDataModel
     }
 
     /**
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @param $data
      * @return $this
      */
-    protected function processCustomer(\Magento\Sales\Model\Order $order, &$data)
+    protected function processCustomer(Order $order, &$data): OrderToDataModel
     {
         if ($customerId = $order->getCustomerId()) {
             $data['customer'] = [];
@@ -183,13 +194,13 @@ class OrderToDataModel
     }
 
     /**
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @param $data
      * @return $this
      */
-    protected function processAddresses(\Magento\Sales\Model\Order $order, &$data)
+    protected function processAddresses(Order $order, &$data): OrderToDataModel
     {
-        /** @var \Magento\Sales\Model\Order\Address $address */
+        /** @var Address $address */
         foreach ($order->getAddressesCollection() as $address) {
             $type = $address->getAddressType();
             $data['addresses'][$type] = $address->toArray([
@@ -214,17 +225,17 @@ class OrderToDataModel
     }
 
     /**
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @param $data
      * @return $this
      */
-    protected function processOrderItems(\Magento\Sales\Model\Order $order, &$data)
+    protected function processOrderItems(Order $order, &$data): OrderToDataModel
     {
         $itemsCollection = $order->getItemsCollection();
 
         $data['total_items'] = $itemsCollection->count();
         foreach ($itemsCollection as $item) {
-            /** @var \Magento\Sales\Model\Order\Item $item */
+            /** @var Item $item */
             $_data = $item->toArray([
                 'item_id',
                 'name',
@@ -252,11 +263,13 @@ class OrderToDataModel
     }
 
     /**
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @param $data
      * @return $this
+     * @throws LocalizedException
+     * @throws Exception
      */
-    protected function processGeneralData(\Magento\Sales\Model\Order $order, &$data)
+    protected function processGeneralData(Order $order, &$data): OrderToDataModel
     {
         $timezone = new \DateTimeZone($this->storeConfig->getValue("general/locale/timezone",
             ScopeInterface::SCOPE_STORE, $order->getStoreId()));
@@ -308,10 +321,10 @@ class OrderToDataModel
     /**
      * M1 legacy method for retrieving payment method of adyen orders by Bart. Unsure if still needed in M2
      *
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @return bool
      */
-    protected function getCcTypeFromOrder(\Magento\Sales\Model\Order $order)
+    protected function getCcTypeFromOrder(Order $order): bool
     {
         if (!$order->getId()) {
             return false;

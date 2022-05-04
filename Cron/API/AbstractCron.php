@@ -192,10 +192,12 @@ abstract class AbstractCron
     /**
      * #192: ERP koppeling - Rate limiter maken voor exception-emails
      * @param String $email
+     * @param string $subject
      * @param String $content
      * @return $this
-     * @throws NoSuchEntityException
      * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws MailException
      */
     public function sendErrorMail(string $email, string $subject, string $content): AbstractCron
     {

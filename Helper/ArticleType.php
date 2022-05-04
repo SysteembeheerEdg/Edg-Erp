@@ -67,7 +67,7 @@ class ArticleType extends AbstractHelper
 
                 $shipment->addComment($comment, false, false);
 
-                $order->addStatusHistoryComment($comment, false);
+                $order->addCommentToStatusHistory($comment);
 
                 $shipment
                     //->sendEmail(false) //sending email to only bcc is a bit more complicated in M2 skip for now
@@ -93,7 +93,7 @@ class ArticleType extends AbstractHelper
      * @param Product $product
      * @return bool
      */
-    public function isNonShippableProduct(Product $product)
+    public function isNonShippableProduct(Product $product): bool
     {
         $nonShippableArticleTypes = $this->articleTypeSourceModel->getNonShippableArticleTypes();
         $articleType = (int)$product->getBoldPimArticletype();

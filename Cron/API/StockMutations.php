@@ -7,6 +7,9 @@ use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\MailException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Logger\Monolog;
 use Monolog\Logger;
 use Magento\Framework\Mail\Template\TransportBuilder;
@@ -14,13 +17,6 @@ use Magento\Store\Model\StoreManager;
 
 class StockMutations extends AbstractCron
 {
-
-    const XML_PATH_STOCKMUTATIONS_STRIP_PREFIX = 'stockmutations_import_strip_prefix';
-
-    /**
-     * @var StockRegistryInterface
-     */
-    protected StockRegistryInterface $stockregistry;
 
     /**
      * @var TransportBuilder
@@ -34,7 +30,6 @@ class StockMutations extends AbstractCron
      * @param ConfigInterface $config
      * @param TransportBuilder $transportBuilder
      * @param StoreManager $storeManager
-     * @param StockRegistryInterface $stockRegistry
      * @param array $settings
      * @throws FileSystemException
      */
@@ -45,13 +40,17 @@ class StockMutations extends AbstractCron
         ConfigInterface $config,
         TransportBuilder $transportBuilder,
         StoreManager $storeManager,
-        StockRegistryInterface $stockRegistry,
         array $settings = []
     ) {
-        $this->stockregistry = $stockRegistry;
         parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
+    /**
+     * @return $this
+     * @throws LocalizedException
+     * @throws MailException
+     * @throws NoSuchEntityException
+     */
     public function execute()
     {
         $this->moduleLog(__METHOD__ . '();', true);
@@ -63,14 +62,17 @@ class StockMutations extends AbstractCron
         return $this;
     }
 
+    /**
+     * @throws NoSuchEntityException
+     * @throws MailException
+     * @throws LocalizedException
+     */
     protected function processMutations()
     {
         $date = date("Y_m_d");
         $stream = $this->addLogStreamToServiceLogger($this->_stockmutationsDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
 
         $client = $this->helper->getSoapClient();
-
-        $stripPrefix = $this->helper->getConfigSetting(self::XML_PATH_STOCKMUTATIONS_STRIP_PREFIX);
 
 
         $results = $client->pullStockUpdates($this->helper->getEnvironmentTag());
@@ -113,7 +115,7 @@ class StockMutations extends AbstractCron
                         ));
                     }
 
-                } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                } catch (NoSuchEntityException $e) {
                     $this->serviceLog($stream, 'Product with SKU ' . $sku . ' was not found in the Magento catalog');
                 } catch (\Exception $e) {
                     $this->serviceLog($stream, 'Error during setting stock for ' . $sku, Logger::ERROR);

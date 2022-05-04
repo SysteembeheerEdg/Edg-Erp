@@ -164,10 +164,10 @@ class OrderStatusImport extends AbstractCron
                     $magentoOrder->setData("state", $status == "shipped" ? $shippedStatus : "processing");
                     $magentoOrder->addStatusToHistory(false, 'order status imported from progress');
 
-                    var_dump($magentoOrder);die();
                     $this->saveShipment($shipment);
 
                     $this->moduleLog(sprintf('Created shipment #%s (id %s) for order #%s (id %s)',
+                        $shipment->getIncrementId(),
                         $shipment->getIncrementId(),
                         $shipment->getId(),
                         $magentoOrder->getIncrementId(),
