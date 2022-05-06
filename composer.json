@@ -2,7 +2,7 @@
   "name": "edg/module-erp-koppeling",
   "description": "EDG ERP Magento 2 integration",
   "require": {
-    "php": "|~7.4.0",
+    "php": "~7.4.0",
     "edg/module-erp-service": "*",
     "magento/magento2-base": "^2.1.9"
   },
