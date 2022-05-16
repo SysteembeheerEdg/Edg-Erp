@@ -2,31 +2,55 @@
 
 namespace Edg\Erp\Cron\API;
 
+use Edg\Erp\Helper\Data;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Mail\Message;
-use Zend\Log\Logger;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\MailException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Logger\Monolog;
+use Monolog\Logger;
+use Magento\Framework\Mail\Template\TransportBuilder;
+use Magento\Store\Model\StoreManager;
 
 class StockMutations extends AbstractCron
 {
 
-    const XML_PATH_STOCKMUTATIONS_STRIP_PREFIX = 'stockmutations_import_strip_prefix';
+    /**
+     * @var TransportBuilder
+     */
+    protected TransportBuilder $transportBuilder;
 
-    protected $stockregistry;
-
+    /**
+     * @param Data $helper
+     * @param DirectoryList $directoryList
+     * @param Monolog $monolog
+     * @param ConfigInterface $config
+     * @param TransportBuilder $transportBuilder
+     * @param StoreManager $storeManager
+     * @param array $settings
+     * @throws FileSystemException
+     */
     public function __construct(
-        \Edg\Erp\Helper\Data $helper,
+        Data $helper,
         DirectoryList $directoryList,
+        Monolog $monolog,
         ConfigInterface $config,
-        Message $message,
-        \Magento\Store\Model\StoreManager $storeManager,
-        \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
-        $settings = []
+        TransportBuilder $transportBuilder,
+        StoreManager $storeManager,
+        array $settings = []
     ) {
-        $this->stockregistry = $stockRegistry;
-        parent::__construct($helper, $directoryList, $config, $message, $storeManager, $settings);
+        parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
+    /**
+     * @return $this
+     * @throws LocalizedException
+     * @throws MailException
+     * @throws NoSuchEntityException
+     */
     public function execute()
     {
         $this->moduleLog(__METHOD__ . '();', true);
@@ -38,14 +62,17 @@ class StockMutations extends AbstractCron
         return $this;
     }
 
+    /**
+     * @throws NoSuchEntityException
+     * @throws MailException
+     * @throws LocalizedException
+     */
     protected function processMutations()
     {
         $date = date("Y_m_d");
-        $this->addLogStreamToServiceLogger($this->_stockmutationsDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
+        $stream = $this->addLogStreamToServiceLogger($this->_stockmutationsDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
 
         $client = $this->helper->getSoapClient();
-
-        $stripPrefix = $this->helper->getConfigSetting(self::XML_PATH_STOCKMUTATIONS_STRIP_PREFIX);
 
 
         $results = $client->pullStockUpdates($this->helper->getEnvironmentTag());
@@ -62,7 +89,7 @@ class StockMutations extends AbstractCron
                 $qty = $stockMutation->getStock();
                 try {
                     $stockItem = $this->stockregistry->getStockItemBySku($sku);
-                    $this->serviceLog(sprintf('Setting product stock qty of sku %s with Magento ID %s to %s', $sku,
+                    $this->serviceLog($stream, sprintf('Setting product stock qty of sku %s with Magento ID %s to %s', $sku,
                         $stockItem->getProductId(), $qty));
 
                     $oldQty = $stockItem->getQty();
@@ -70,7 +97,7 @@ class StockMutations extends AbstractCron
                     if (round($oldQty, 0) != round($qty, 0)) {
                         $id = $this->stockregistry->updateStockItemBySku($sku, $stockItem);
 
-                        $this->serviceLog(sprintf(
+                        $this->serviceLog($stream, sprintf(
                             'Successfully updated stock for product %s with Magento ID %s and Magento Stock item ID %s from %s to %s',
                             $sku,
                             $stockItem->getProductId(),
@@ -79,7 +106,7 @@ class StockMutations extends AbstractCron
                             $qty
                         ));
                     } else {
-                        $this->serviceLog(sprintf(
+                        $this->serviceLog($stream, sprintf(
                             'No stock update needed for product %s with Magento ID %s and Magento Stock item ID %s, qty was already set to %s',
                             $sku,
                             $stockItem->getProductId(),
@@ -88,11 +115,11 @@ class StockMutations extends AbstractCron
                         ));
                     }
 
-                } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-                    $this->serviceLog('Product with SKU ' . $sku . ' was not found in the Magento catalog');
+                } catch (NoSuchEntityException $e) {
+                    $this->serviceLog($stream, 'Product with SKU ' . $sku . ' was not found in the Magento catalog');
                 } catch (\Exception $e) {
-                    $this->serviceLog('Error during setting stock for ' . $sku, Logger::ERR);
-                    $this->serviceLog($e->getMessage(), Logger::ERR);
+                    $this->serviceLog($stream, 'Error during setting stock for ' . $sku, Logger::ERROR);
+                    $this->serviceLog($stream, $e->getMessage(), Logger::ERROR);
                     $this->sendErrorMail($this->getErrorEmail(),
                         'Exception occured during stock mutations from EDG for product ' . $sku, $e->getMessage());
                 }

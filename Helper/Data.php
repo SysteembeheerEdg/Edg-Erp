@@ -2,12 +2,16 @@
 
 namespace Edg\Erp\Helper;
 
+use Edg\Erp\Logger\PimLogger;
+use Edg\ErpService\Client;
+use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Tax\Model\Calculation;
+use Magento\Framework\Serialize\Serializer\Json;
 
 class Data extends AbstractHelper
 {
@@ -19,35 +23,65 @@ class Data extends AbstractHelper
 
     const XML_CONFIG_PATH_SETTING_DEBUG_ENABLED = 'bold_orderexim/logging/logging_debug_enabled';
 
-    protected $productRepository;
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected ProductRepositoryInterface $productRepository;
 
-    protected $criteriaBuilder;
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    protected SearchCriteriaBuilder $criteriaBuilder;
 
-    protected $taxCalculation;
+    /**
+     * @var Calculation
+     */
+    protected Calculation $taxCalculation;
 
-    protected $moduleLog;
+    /**
+     * @var PimLogger
+     */
+    protected PimLogger $moduleLog;
 
-    protected $_cache = [];
+    /**
+     * @var Json
+     */
+    protected Json $jsonSerializer;
 
+    /**
+     * @var array
+     */
+    protected array $_cache = [];
+
+    /**
+     * @param Context $context
+     * @param ProductRepositoryInterface $productRepository
+     * @param SearchCriteriaBuilder $criteriaBuilder
+     * @param Calculation $taxCalculation
+     * @param PimLogger $logger
+     * @param Json $jsonSerializer
+     */
     public function __construct(
         Context $context,
         ProductRepositoryInterface $productRepository,
         SearchCriteriaBuilder $criteriaBuilder,
         Calculation $taxCalculation,
-        \Edg\Erp\Logger\PimLogger $logger
+        PimLogger $logger,
+        Json $jsonSerializer
     ) {
         parent::__construct($context);
         $this->productRepository = $productRepository;
         $this->criteriaBuilder = $criteriaBuilder;
         $this->taxCalculation = $taxCalculation;
         $this->moduleLog = $logger;
+        $this->jsonSerializer = $jsonSerializer;
     }
 
 
     /**
      * Retrieve Pim to Magento field mapping
      */
-    public function getPimFieldMapping()
+    public function getPimFieldMapping(): array
     {
         return [
             'articlenumber' => 'sku',
@@ -60,7 +94,12 @@ class Data extends AbstractHelper
         ];
     }
 
-    public function getSystemConfigSetting($path, $scope = ScopeInterface::SCOPE_STORE)
+    /**
+     * @param $path
+     * @param string $scope
+     * @return mixed
+     */
+    public function getSystemConfigSetting($path, string $scope = ScopeInterface::SCOPE_STORE)
     {
         return $this->scopeConfig->getValue($path, $scope);
     }
@@ -188,7 +227,7 @@ class Data extends AbstractHelper
      */
     public function log($msg, $debug = false)
     {
-        if ($debug == true) {
+        if ($debug) {
             if ($this->scopeConfig->isSetFlag(self::XML_CONFIG_PATH_SETTING_DEBUG_ENABLED,
                 ScopeInterface::SCOPE_STORE)
             ) {
@@ -199,6 +238,9 @@ class Data extends AbstractHelper
         }
     }
 
+    /**
+     * @return array|false|mixed
+     */
     public function getSkuPrefix()
     {
         return $this->getConfigSetting('sku_prefix');
@@ -208,13 +250,13 @@ class Data extends AbstractHelper
      * Get tax class mapping based on mapping configured in bold_orderexim/articleinfo/tax_class_mapping
      * @return array
      */
-    public function getTaxClassMapping()
+    public function getTaxClassMapping(): array
     {
         $taxClassMappingConfig = $this->scopeConfig->getValue('bold_orderexim/articleinfo/tax_class_mapping', ScopeInterface::SCOPE_STORE);
         $taxClassMapping = [];
 
         if ($taxClassMappingConfig && is_string($taxClassMappingConfig)) {
-            foreach (json_decode($taxClassMappingConfig) as $taxMappingRow) {
+            foreach ($this->jsonSerializer->unserialize($taxClassMappingConfig) as $taxMappingRow) {
                 $taxClassMapping[$taxMappingRow->pim_tax_rate] = $taxMappingRow->magento_tax_class;
             }
         }
@@ -222,21 +264,34 @@ class Data extends AbstractHelper
         return $taxClassMapping;
     }
 
+    /**
+     * @return mixed
+     */
     public function getArticleInfoSettings()
     {
         return $this->scopeConfig->getValue('bold_orderexim/articleinfo', ScopeInterface::SCOPE_STORE);
     }
 
+    /**
+     * @param $entry
+     * @return mixed
+     */
     public function getArticleInfoSetting($entry)
     {
         return $this->scopeConfig->getValue('bold_orderexim/articleinfo/' . $entry, ScopeInterface::SCOPE_STORE);
     }
 
+    /**
+     * @return array|false|mixed
+     */
     public function getOrderImportSendEmailAfterShipping()
     {
         return $this->getConfigSetting('order_import_send_email_after_shipping');
     }
 
+    /**
+     * @return array|false|mixed
+     */
     public function getOrderImportStatusAfterShipping()
     {
         return $this->getConfigSetting('order_import_status_after_shipping');
@@ -245,7 +300,7 @@ class Data extends AbstractHelper
     /**
      * Config setting wrapper
      */
-    public function isArticleImportEnabled()
+    public function isArticleImportEnabled(): bool
     {
         return ($this->getConfigSetting('articleinfo_import_enabled') === '1');
     }
@@ -319,7 +374,8 @@ class Data extends AbstractHelper
     /**
      * Retrieve new PIM soap client instance
      *
-     * @return \Edg\ErpService\Client
+     * @return Client
+     * @throws Exception
      */
     public function getSoapClient()
     {
@@ -340,10 +396,10 @@ class Data extends AbstractHelper
             $settings['location'] = $location;
         }
 
-        $client = new \Edg\ErpService\Client($this->getWsAddress(), $settings);
+        $client = new Client($this->getWsAddress(), $settings);
 
         if ($this->getLogLibraryEnabled()) {
-            $debug = $this->getLogLibraryDebugMode() ? true : false;
+            $debug = (bool)$this->getLogLibraryDebugMode();
             $client->setLogger($this->getPimLogger(), $debug);
         }
 
@@ -399,16 +455,26 @@ class Data extends AbstractHelper
         return $this->scopeConfig->getValue('bold_orderexim/remote/uri', ScopeInterface::SCOPE_STORE);
     }
 
+    /**
+     * @return mixed
+     */
     public function getLogLibraryEnabled()
     {
         return $this->getLoggingSetting('library_log_enabled');
     }
 
+    /**
+     * @param $entry
+     * @return mixed
+     */
     public function getLoggingSetting($entry)
     {
         return $this->scopeConfig->getValue('bold_orderexim/logging/' . $entry, ScopeInterface::SCOPE_STORE);
     }
 
+    /**
+     * @return mixed
+     */
     public function getLogLibraryDebugMode()
     {
         return $this->getLoggingSetting('library_debug_enabled');
@@ -417,7 +483,7 @@ class Data extends AbstractHelper
     /**
      * retrieve Edg Erp logger
      *
-     * @return \Edg\Erp\Logger\PimLogger
+     * @return PimLogger
      */
     public function getPimLogger()
     {

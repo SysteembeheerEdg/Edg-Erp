@@ -1,3 +1,37 @@
+## 1.5.0 (2022-05-16)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.0)
+
+*  [FEATURE][KEDG-15] Removed zend logger from abstract cron *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] General clean-up *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Updated email sending *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Updated service logger *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Updated all servicelogs *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Added subject to email template *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Fixed articleinfo pull *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Set php requirements to 7.4 and cleaned up code further *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Cleaned up/updated code and replaced json_decode with frame serializer *(Dylan Maurits)*
+*  Update composer.json *(dylanmaurits)*
+*  Update composer.json *(dylanmaurits)*
+*  [FEATURE][KEDG-15] fixed php version *(Dylan Maurits)*
+
+
+## 1.4.1 (2021-10-11)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.4.1)
+
+*  Added check to prevent error on empty array *(mhaagen85)*
+
+
+## 1.4.0 (2021-10-11)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.4.0)
+
+*  [FEATURE][SEDG-177] Added new cron task for updating articles *(martijn.vanhaagen)*
+*  Update README.md *(mhaagen85)*
+*  [FEATURE][SEDG-157] Adjusted Labels from bold > EDG *(mhaagen85)*
+
+
 ## 1.3.2 (2021-09-08)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.3.2)

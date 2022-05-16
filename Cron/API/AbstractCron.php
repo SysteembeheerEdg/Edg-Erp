@@ -2,74 +2,117 @@
 
 namespace Edg\Erp\Cron\API;
 
+use Edg\Erp\Helper\Data;
+use Exception;
 use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Mail\Message;
-use Zend\Log\Logger;
-use Zend\Log\Writer\Stream;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\MailException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Logger\Monolog;
+use Magento\Framework\Mail\Template\TransportBuilder;
+use Magento\Store\Model\StoreManager;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 
 abstract class AbstractCron
 {
-    protected $loglevels = [
-        Logger::EMERG,
+    const ERROR_EMAIL_TEMPLATE = 'error_email';
+
+    /**
+     * @var array
+     */
+    protected array $loglevels = [
+        Logger::EMERGENCY,
         Logger::ALERT,
-        Logger::CRIT,
-        Logger::ERR,
-        Logger::WARN,
+        Logger::CRITICAL,
+        Logger::ERROR,
+        Logger::WARNING,
         Logger::NOTICE,
         Logger::INFO,
         Logger::DEBUG
     ];
 
     /**
-     * @var Logger
+     * @var Monolog
      */
-    protected $zendLogger;
+    protected Monolog $monolog;
 
     /**
-     * @var \Edg\Erp\Helper\Data
+     * @var Data
      */
-    protected $helper;
+    protected Data $helper;
 
     /**
      * @var ConfigInterface
      */
-    protected $config;
+    protected ConfigInterface $config;
 
     /**
-     * @var Message
+     * @var TransportBuilder
      */
-    protected $email;
+    protected TransportBuilder $transportBuilder;
 
     /**
-     * @var \Magento\Store\Model\StoreManager
+     * @var StoreManager
      */
-    protected $storeManager;
-
-
-    protected $_exportDir = null;
-    protected $_importDir = null;
-    protected $_debugDir = null;
-    protected $_stockmutationsDir = null;
-    protected $settings;
+    protected StoreManager $storeManager;
 
     /**
-     *
+     * @var string|null
      */
-    protected $_logOutputEnabled = false;
+    protected ?string $_exportDir = null;
 
+    /**
+     * @var string|null
+     */
+    protected ?string $_importDir = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $_debugDir = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $_stockmutationsDir = null;
+
+    /**
+     * @var array
+     */
+    protected array $settings;
+
+    /**
+     * @var bool
+     */
+    protected bool $_logOutputEnabled = false;
+
+    /**
+     * @param Data $helper
+     * @param DirectoryList $directoryList
+     * @param Monolog $monolog
+     * @param ConfigInterface $config
+     * @param TransportBuilder $transportBuilder
+     * @param StoreManager $storeManager
+     * @param array $settings
+     * @throws FileSystemException
+     */
     public function __construct(
-        \Edg\Erp\Helper\Data $helper,
+        Data $helper,
         DirectoryList $directoryList,
+        Monolog $monolog,
         ConfigInterface $config,
-        Message $message,
-        \Magento\Store\Model\StoreManager $storeManager,
-        $settings = []
-    ) {
-        $this->zendLogger = new Logger();
+        TransportBuilder $transportBuilder,
+        StoreManager $storeManager,
+        array $settings = []
+    )
+    {
         $this->helper = $helper;
         $this->config = $config;
-        $this->email = $message;
+        $this->monolog = $monolog;
+        $this->transportBuilder = $transportBuilder;
         $this->storeManager = $storeManager;
 
         $this->_exportDir = $directoryList->getPath(DirectoryList::VAR_DIR) . "/webservice/orderupload";
@@ -82,7 +125,7 @@ abstract class AbstractCron
         $this->_checkPrerequisites();
     }
 
-    protected function initDefaultSettings($settings)
+    protected function initDefaultSettings($settings): array
     {
         return array_merge([
             'force_order_upload' => false/** @see \Edg\Erp\Cron\API\OrderExport */,
@@ -94,7 +137,7 @@ abstract class AbstractCron
     /**
      * Make sure all logging directories are present
      */
-    protected function _checkPrerequisites()
+    protected function _checkPrerequisites(): AbstractCron
     {
 
         $dirs = [
@@ -122,7 +165,7 @@ abstract class AbstractCron
      * @param bool $debug
      * @return $this
      */
-    protected function moduleLog($msg, $debug = false)
+    protected function moduleLog($msg, bool $debug = false): AbstractCron
     {
         if ($this->_logOutputEnabled === true) {
             if (php_sapi_name() !== 'cli') {
@@ -139,15 +182,6 @@ abstract class AbstractCron
     public abstract function execute();
 
     /**
-     *
-     */
-    public function enabledLogOutput()
-    {
-        $this->_logOutputEnabled = true;
-        return $this;
-    }
-
-    /**
      * Retrieve email to send error report to
      */
     public function getErrorEmail()
@@ -158,70 +192,94 @@ abstract class AbstractCron
     /**
      * #192: ERP koppeling - Rate limiter maken voor exception-emails
      * @param String $email
-     * @param String $subject
+     * @param string $subject
      * @param String $content
      * @return $this
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws MailException
      */
-    public function sendErrorMail($email, $subject, $content)
+    public function sendErrorMail(string $email, string $subject, string $content): AbstractCron
     {
         $lastSentErrorEmail = $this->helper->getSystemConfigSetting('bold/bold_release/last_sent_error_email');
 
-        // Skip procedure if last sent error email is sent more then one hour ago (60 sec * 60 min)
+        // Skip procedure if last sent error email is sent more then one hour ago (60 * 60 sec)
         if (($lastSentErrorEmail + (60 * 60)) > time()) {
             $this->moduleLog('Email exception suppressed.');
             return $this;
         }
 
-        $mail = $this->email;
-        $mail
-            ->setMessageType(Message::TYPE_TEXT)
-            ->addTo($email)
-            ->setFrom(
-                $this->helper->getSystemConfigSetting('trans_email/ident_general/email'),
-                $this->helper->getSystemConfigSetting('trans_email/ident_general/name')
-            )->setBodyText($content)
-            ->setSubject($subject);
+            $storeId = $this->storeManager->getStore()->getId();
 
-        try {
-            $mail->send();
-        } catch (\Exception $e) {
-            $this->moduleLog('unable to send PIM error email ' . $e->getMessage() . ', ' . $subject . ', ' . $content,
-                Logger::ERR);
+            $from = [
+                'email' => $this->helper->getSystemConfigSetting('trans_email/ident_general/email'),
+                'name' => $this->helper->getSystemConfigSetting('trans_email/ident_general/name')
+            ];
+
+            $templateOptions = [
+                'area' => \Magento\Framework\App\Area::AREA_FRONTEND,
+                'store' => $storeId
+            ];
+
+        $transport = $this->transportBuilder->setTemplateIdentifier(self::ERROR_EMAIL_TEMPLATE)
+            ->setTemplateOptions($templateOptions)
+            ->setFrombyScope($from)
+            ->addTo($email)
+            ->setTemplateVars(
+                [
+                    'message' => $content,
+                    'subject' => $subject
+                ])
+            ->getTransport();
+
+            try {
+                $transport->sendMessage();
+            } catch (Exception $e) {
+                $this->moduleLog('unable to send PIM error email ' . $e->getMessage() . ', ' . $subject . ', ' . $content,
+                Logger::ERROR);
         }
+
 
         $this->config->saveConfig('bold/bold_release/last_sent_error_email', time(), 'default', 0);
 
         $this->storeManager->getStore()->resetConfig();
+
         return $this;
     }
 
     /**
-     * write to an api service specific log file.
-     *
-     * writes log message to to a file. first call addLogStreamToServiceLogger to set a log writer.
-     * If no log writer is set, STDERR will be used to log messages.
-     *
+     * @param $stream
      * @param $message
      * @param int $priority
      * @param array $params
+     * @return void
+     * @throws Exception
      */
-    protected function serviceLog($message, $priority = Logger::INFO, $params = [])
+    protected function serviceLog($stream, $message, int $priority = Logger::INFO, array $params = [])
     {
         if (!in_array($priority, $this->loglevels)) {
             $priority = Logger::INFO;
         }
 
-        if (!$this->zendLogger->getWriters()) {
+        if (!$stream) {
             $this->addLogStreamToServiceLogger('php://stderr');
         }
 
-        $this->zendLogger->log($priority, $message, $params);
+        $stream->log($priority, $message, $params);
     }
 
-    protected function addLogStreamToServiceLogger($path)
+    /**
+     * @param $path
+     * @return Logger
+     * @throws Exception
+     */
+    protected function addLogStreamToServiceLogger($path): Logger
     {
-        $writer = new Stream($path);
-        $this->zendLogger->addWriter($writer);
-        return $this;
+        $logger = new Logger('app');
+
+        $logger->pushHandler(new StreamHandler($path));
+
+        return $logger;
     }
+
 }
