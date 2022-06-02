@@ -257,7 +257,7 @@ class Data extends AbstractHelper
 
         if ($taxClassMappingConfig && is_string($taxClassMappingConfig)) {
             foreach ($this->jsonSerializer->unserialize($taxClassMappingConfig) as $taxMappingRow) {
-                $taxClassMapping[$taxMappingRow->pim_tax_rate] = $taxMappingRow->magento_tax_class;
+                $taxClassMapping[$taxMappingRow['pim_tax_rate']] = $taxMappingRow['magento_tax_class'];
             }
         }
 
