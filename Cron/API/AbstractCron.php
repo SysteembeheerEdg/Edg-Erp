@@ -262,7 +262,7 @@ abstract class AbstractCron
         }
 
         if (!$stream) {
-            $this->addLogStreamToServiceLogger('php://stderr');
+            $stream = $this->addLogStreamToServiceLogger('php://stderr');
         }
 
         $stream->log($priority, $message, $params);

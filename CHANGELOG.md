@@ -1,3 +1,11 @@
+## 1.5.1 (2022-06-03)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.1)
+
+*  [FEATURE][SEDG-181] changed object to array *(Dylan Maurits)*
+*  [FEATURE][SEDG-181] Fixed service log when no stream was added *(Dylan Maurits)*
+
+
 ## 1.5.0 (2022-05-16)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.0)
