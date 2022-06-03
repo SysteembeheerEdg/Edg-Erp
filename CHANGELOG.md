@@ -1,3 +1,11 @@
+## 1.5.2 (2022-06-03)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.2)
+
+*  [FEATURE][SEDG-181] Fixed service log when no stream was added *(Dylan Maurits)*
+*  [FEATURE][SEDG-181] Changed return type from boolean to mixed *(Dylan Maurits)*
+
+
 ## 1.5.1 (2022-06-03)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.1)

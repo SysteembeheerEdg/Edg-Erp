@@ -322,14 +322,13 @@ class OrderToDataModel
      * M1 legacy method for retrieving payment method of adyen orders by Bart. Unsure if still needed in M2
      *
      * @param Order $order
-     * @return bool
+     * @return false|string|null
      */
-    protected function getCcTypeFromOrder(Order $order): bool
+    protected function getCcTypeFromOrder(Order $order)
     {
         if (!$order->getId()) {
             return false;
         }
-
         if ($order->getPayment()) {
             return $order->getPayment()->getCcType();
         }
