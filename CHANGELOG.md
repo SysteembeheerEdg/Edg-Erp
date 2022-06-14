@@ -1,22 +1,6 @@
-## 1.5.2 (2022-06-03)
+## 2.0.0 (2022-06-14)
 
-[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.2)
-
-*  [FEATURE][SEDG-181] Fixed service log when no stream was added *(Dylan Maurits)*
-*  [FEATURE][SEDG-181] Changed return type from boolean to mixed *(Dylan Maurits)*
-
-
-## 1.5.1 (2022-06-03)
-
-[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.1)
-
-*  [FEATURE][SEDG-181] changed object to array *(Dylan Maurits)*
-*  [FEATURE][SEDG-181] Fixed service log when no stream was added *(Dylan Maurits)*
-
-
-## 1.5.0 (2022-05-16)
-
-[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/1.5.0)
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/2.0.0)
 
 *  [FEATURE][KEDG-15] Removed zend logger from abstract cron *(Dylan Maurits)*
 *  [FEATURE][KEDG-15] General clean-up *(Dylan Maurits)*
@@ -30,6 +14,11 @@
 *  Update composer.json *(dylanmaurits)*
 *  Update composer.json *(dylanmaurits)*
 *  [FEATURE][KEDG-15] fixed php version *(Dylan Maurits)*
+*  [FEATURE][KEDG-15] Fixed logger *(Dylan Maurits)*
+*  [FEATURE][SEDG-181] changed object to array *(Dylan Maurits)*
+*  [FEATURE][SEDG-181] Fixed service log when no stream was added *(Dylan Maurits)*
+*  [FEATURE][SEDG-181] Fixed service log when no stream was added *(Dylan Maurits)*
+*  [FEATURE][SEDG-181] Changed return type from boolean to mixed *(Dylan Maurits)*
 
 
 ## 1.4.1 (2021-10-11)
