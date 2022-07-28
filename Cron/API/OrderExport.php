@@ -16,10 +16,18 @@ use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Logger\Monolog;
 use Magento\Framework\Phrase;
+use Magento\Sales\Api\Data\OrderSearchResultInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
-use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManager;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SearchCriteriaInterface;
+use Magento\Framework\Api\FilterBuilder;
+use Magento\Framework\Api\Search\FilterGroup;
+use Magento\Framework\Api\Search\FilterGroupBuilder;
+
+
 
 class OrderExport extends AbstractCron
 {
@@ -39,14 +47,39 @@ class OrderExport extends AbstractCron
     protected TransportBuilder $transportBuilder;
 
     /**
-     * @var OrderRepository
+     * @var OrderRepositoryInterface
      */
-    protected OrderRepository $orderRepository;
+    protected OrderRepositoryInterface $orderRepository;
 
     /**
      * @var ArticleType
      */
     protected ArticleType $articleTypeHelper;
+
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    protected SearchCriteriaBuilder $searchCriteriaBuilder;
+
+    /**
+     * @var SearchCriteriaInterface
+     */
+    protected SearchCriteriaInterface $searchCriteria;
+
+    /**
+     * @var FilterBuilder
+     */
+    protected FilterBuilder $filter;
+
+    /**
+     * @var FilterGroup
+     */
+    protected FilterGroup $filterGroup;
+
+    /**
+     * @var FilterGroupBuilder
+     */
+    protected FilterGroupBuilder $filterGroupBuilder;
 
     /**
      * @param Data $helper
@@ -57,8 +90,13 @@ class OrderExport extends AbstractCron
      * @param StoreManager $storeManager
      * @param OrderFactory $orderFactory
      * @param OrderToDataModel $orderConverter
-     * @param OrderRepository $orderRepository
+     * @param OrderRepositoryInterface $orderRepository
      * @param ArticleType $articleTypeHelper
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param SearchCriteriaInterface $searchCriteria
+     * @param FilterBuilder $filterBuilder
+     * @param FilterGroup $filterGroup
+     * @param FilterGroupBuilder $filterGroupBuilder
      * @param array $settings
      * @throws FileSystemException
      */
@@ -71,14 +109,24 @@ class OrderExport extends AbstractCron
         StoreManager $storeManager,
         OrderFactory $orderFactory,
         OrderToDataModel $orderConverter,
-        OrderRepository $orderRepository,
+        OrderRepositoryInterface $orderRepository,
         ArticleType $articleTypeHelper,
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        SearchCriteriaInterface $searchCriteria,
+        FilterBuilder $filterBuilder,
+        FilterGroup $filterGroup,
+        FilterGroupBuilder $filterGroupBuilder,
         array $settings = []
     ) {
         $this->orderFactory = $orderFactory;
         $this->orderConverter = $orderConverter;
         $this->orderRepository = $orderRepository;
         $this->articleTypeHelper = $articleTypeHelper;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->searchCriteria = $searchCriteria;
+        $this->filterBuilder = $filterBuilder;
+        $this->filterGroup = $filterGroup;
+        $this->filterGroupBuilder = $filterGroupBuilder;
         parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
@@ -93,7 +141,6 @@ class OrderExport extends AbstractCron
             $this->prepareExport(true);
             return;
         }
-
         if ($this->helper->isUploadOrdersEnabled()) {
             $this->prepareExport(false);
         } else {
@@ -124,13 +171,11 @@ class OrderExport extends AbstractCron
 
             $this->moduleLog('*** start order export (multiple orders)', true);
 
-            $collection = $this->orderFactory->create()->getCollection()
-                ->addFieldToFilter('status', ['in' => $orderStatuses])
-                ->addFieldToFilter('pim_is_exported', 0);
+            $collection = $this->getOrderCollection($orderStatuses);
 
-            $collection->setPageSize(100);
             $pages = $collection->getLastPageNumber();
             $currentPage = 1;
+
 
             $this->moduleLog(sprintf("Detected %d order(s) possibly suitable for export based on order status: %s",
                 $collection->getSize(), var_export($orderStatuses, true)), true);
@@ -140,6 +185,7 @@ class OrderExport extends AbstractCron
 
                 /** @var Order $order */
                 foreach ($collection as $order) {
+
                     try {
                         $paymentMethodCode = $order->getPayment()->getMethodInstance()->getCode();
                         $matchFound = false;
@@ -213,8 +259,10 @@ class OrderExport extends AbstractCron
 
         $client = $this->helper->getSoapClient();
 
+
         $orderData = $this->orderConverter->convert($order, $this->helper->getConfigSetting('export_order_type'),
             $this->helper->getEnvironmentTag());
+
 
         $responses = $client->pushNewOrder($orderData, [
             'export_type' => $this->helper->getConfigSetting('export_order_type'),
@@ -243,5 +291,37 @@ class OrderExport extends AbstractCron
         }
 
         return $this;
+    }
+
+    /**
+     * @param $orderStatuses
+     * @return SearchCriteriaInterface
+     */
+    private function getSearchCriteria($orderStatuses): SearchCriteriaInterface
+    {
+        $isExported = $this->filterBuilder
+            ->setField('pim_is_exported')
+            ->setValue(0)
+            ->setConditionType('eq')
+            ->create();
+        $status = $this->filterBuilder
+            ->setField('status')
+            ->setValue($orderStatuses)
+            ->setConditionType('in')
+            ->create();
+
+        $filterGroup1 = $this->filterGroup->setFilters([$isExported]);
+        $filterGroup2 = $this->filterGroup->setFilters([$status]);
+
+        return $this->searchCriteria->setFilterGroups([$filterGroup1, $filterGroup2])->setPageSize(1000);
+    }
+
+    /**
+     * @param $orderStatuses
+     * @return OrderSearchResultInterface
+     */
+    private function getOrderCollection($orderStatuses): OrderSearchResultInterface
+    {
+        return $this->orderRepository->getList($this->getSearchCriteria($orderStatuses));
     }
 }
