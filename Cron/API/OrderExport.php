@@ -155,7 +155,7 @@ class OrderExport extends AbstractCron
                             $this->exportOrder($order);
                         }
                     } catch (Exception $e) {
-                        $this->serviceLog('Error when exporting order #' . $order->getIncrementId() . ' - ' . $e->getMessage(),
+                        $this->serviceLog($stream,'Error when exporting order #' . $order->getIncrementId() . ' - ' . $e->getMessage(),
                             \Monolog\Logger::ERROR);
 
                         $this->moduleLog(__METHOD__ . ' Error exporting order #' . $order->getIncrementId() . ' ' . $e->getMessage());
