@@ -161,31 +161,23 @@ class OrderExport extends AbstractCron
         $stream = $this->addLogStreamToServiceLogger($this->_exportDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
 
         if (!isset($this->settings['order_id'])) {
-            $orders = [];
 
             $orderStatuses = $this->helper->getOrderStatusesToExport();
-
             $orderPaymentStatuses = $this->helper->getOrderStatusesAndPaymentCodeToExport();
 
             $this->serviceLog($stream, 'Start Export Orders');
-
             $this->moduleLog('*** start order export (multiple orders)', true);
 
-            $collection = $this->getOrderCollection($orderStatuses);
+            $searchCriteria = $this->getSearchCriteria($orderStatuses);
+            $orderList = $this->orderRepository->getList($searchCriteria);
 
-            $pages = $collection->getLastPageNumber();
-            $currentPage = 1;
+            if ($orderList->getTotalCount() > 0) {
 
+                $this->moduleLog(sprintf("Detected %d order(s) possibly suitable for export based on order status: %s",
+                    $orderList->getTotalCount(), var_export($orderStatuses, true)), true);
 
-            $this->moduleLog(sprintf("Detected %d order(s) possibly suitable for export based on order status: %s",
-                $collection->getSize(), var_export($orderStatuses, true)), true);
-
-            while ($currentPage <= $pages) {
-                $collection->setCurPage($currentPage);
-
-                /** @var Order $order */
-                foreach ($collection as $order) {
-
+                $orders = $orderList->getItems();
+                foreach ($orders as $order) {
                     try {
                         $paymentMethodCode = $order->getPayment()->getMethodInstance()->getCode();
                         $matchFound = false;
@@ -216,15 +208,13 @@ class OrderExport extends AbstractCron
                         $this->serviceLog($stream, 'Finished export with exception.', \Monolog\Logger::ERROR);
                         return $this;
                     }
-                }
-                $currentPage++;
-                $collection->clear();
-            }
 
+                }
+            }
         } else {
             $orderId = $this->settings['order_id'];
             $this->serviceLog($stream, "Start Export Order #" . $orderId);
-            $this->exportOrder($orderId, $force);
+            $this->exportOrder($orderId);
         }
 
         $this->serviceLog($stream, 'Finished Export Orders');
@@ -299,29 +289,10 @@ class OrderExport extends AbstractCron
      */
     private function getSearchCriteria($orderStatuses): SearchCriteriaInterface
     {
-        $isExported = $this->filterBuilder
-            ->setField('pim_is_exported')
-            ->setValue(0)
-            ->setConditionType('eq')
+        return $this->searchCriteriaBuilder
+            ->addFilter('pim_is_exported', 0)
+            ->addFilter('status', $orderStatuses, 'in')
+            ->setPageSize(1000)
             ->create();
-        $status = $this->filterBuilder
-            ->setField('status')
-            ->setValue($orderStatuses)
-            ->setConditionType('in')
-            ->create();
-
-        $filterGroup1 = $this->filterGroup->setFilters([$isExported]);
-        $filterGroup2 = $this->filterGroup->setFilters([$status]);
-
-        return $this->searchCriteria->setFilterGroups([$filterGroup1, $filterGroup2])->setPageSize(1000);
-    }
-
-    /**
-     * @param $orderStatuses
-     * @return OrderSearchResultInterface
-     */
-    private function getOrderCollection($orderStatuses): OrderSearchResultInterface
-    {
-        return $this->orderRepository->getList($this->getSearchCriteria($orderStatuses));
     }
 }
