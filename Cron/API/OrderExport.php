@@ -6,27 +6,24 @@ use Edg\Erp\Helper\ArticleType;
 use Edg\Erp\Helper\Data;
 use Edg\Erp\Model\Convert\OrderToDataModel;
 use Exception;
+use Magento\Framework\Api\SearchCriteria;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SearchCriteriaInterface;
+use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
+use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\App\Config\ConfigResource\ConfigInterface;
-use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Mail\Template\TransportBuilder;
-use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Logger\Monolog;
+use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Phrase;
-use Magento\Sales\Api\Data\OrderSearchResultInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
-use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManager;
-use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Api\SearchCriteriaInterface;
-use Magento\Framework\Api\FilterBuilder;
-use Magento\Framework\Api\Search\FilterGroup;
-use Magento\Framework\Api\Search\FilterGroupBuilder;
-
+use Monolog\Logger;
 
 
 class OrderExport extends AbstractCron
@@ -62,71 +59,40 @@ class OrderExport extends AbstractCron
     protected SearchCriteriaBuilder $searchCriteriaBuilder;
 
     /**
-     * @var SearchCriteriaInterface
-     */
-    protected SearchCriteriaInterface $searchCriteria;
-
-    /**
-     * @var FilterBuilder
-     */
-    protected FilterBuilder $filter;
-
-    /**
-     * @var FilterGroup
-     */
-    protected FilterGroup $filterGroup;
-
-    /**
-     * @var FilterGroupBuilder
-     */
-    protected FilterGroupBuilder $filterGroupBuilder;
-
-    /**
+     * @param ArticleType $articleTypeHelper
+     * @param ConfigInterface $config
      * @param Data $helper
      * @param DirectoryList $directoryList
      * @param Monolog $monolog
-     * @param ConfigInterface $config
-     * @param TransportBuilder $transportBuilder
-     * @param StoreManager $storeManager
      * @param OrderFactory $orderFactory
-     * @param OrderToDataModel $orderConverter
      * @param OrderRepositoryInterface $orderRepository
-     * @param ArticleType $articleTypeHelper
+     * @param OrderToDataModel $orderConverter
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param SearchCriteriaInterface $searchCriteria
-     * @param FilterBuilder $filterBuilder
-     * @param FilterGroup $filterGroup
-     * @param FilterGroupBuilder $filterGroupBuilder
+     * @param StoreManager $storeManager
+     * @param TransportBuilder $transportBuilder
      * @param array $settings
      * @throws FileSystemException
      */
     public function __construct(
+        ArticleType $articleTypeHelper,
+        ConfigInterface $config,
         Data $helper,
         DirectoryList $directoryList,
         Monolog $monolog,
-        ConfigInterface $config,
-        TransportBuilder $transportBuilder,
-        StoreManager $storeManager,
         OrderFactory $orderFactory,
-        OrderToDataModel $orderConverter,
         OrderRepositoryInterface $orderRepository,
-        ArticleType $articleTypeHelper,
+        OrderToDataModel $orderConverter,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        SearchCriteriaInterface $searchCriteria,
-        FilterBuilder $filterBuilder,
-        FilterGroup $filterGroup,
-        FilterGroupBuilder $filterGroupBuilder,
+        StoreManager $storeManager,
+        TransportBuilder $transportBuilder,
         array $settings = []
     ) {
-        $this->orderFactory = $orderFactory;
-        $this->orderConverter = $orderConverter;
-        $this->orderRepository = $orderRepository;
         $this->articleTypeHelper = $articleTypeHelper;
+        $this->orderConverter = $orderConverter;
+        $this->orderFactory = $orderFactory;
+        $this->orderRepository = $orderRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->searchCriteria = $searchCriteria;
-        $this->filterBuilder = $filterBuilder;
-        $this->filterGroup = $filterGroup;
-        $this->filterGroupBuilder = $filterGroupBuilder;
+
         parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
@@ -161,7 +127,6 @@ class OrderExport extends AbstractCron
         $stream = $this->addLogStreamToServiceLogger($this->_exportDir . DIRECTORY_SEPARATOR . "log_{$date}.log");
 
         if (!isset($this->settings['order_id'])) {
-
             $orderStatuses = $this->helper->getOrderStatusesToExport();
             $orderPaymentStatuses = $this->helper->getOrderStatusesAndPaymentCodeToExport();
 
@@ -171,45 +136,46 @@ class OrderExport extends AbstractCron
             $searchCriteria = $this->getSearchCriteria($orderStatuses);
             $orderList = $this->orderRepository->getList($searchCriteria);
 
+            $orders = [];
             if ($orderList->getTotalCount() > 0) {
+                $orders = $orderList->getItems();
 
                 $this->moduleLog(sprintf("Detected %d order(s) possibly suitable for export based on order status: %s",
                     $orderList->getTotalCount(), var_export($orderStatuses, true)), true);
+            }
 
-                $orders = $orderList->getItems();
-                foreach ($orders as $order) {
-                    try {
-                        $paymentMethodCode = $order->getPayment()->getMethodInstance()->getCode();
-                        $matchFound = false;
-                        foreach ($orderPaymentStatuses as $status) {
-                            if (isset($status['order_status']) && $status['order_status'] == $order->getStatus()) {
+            foreach ($orders as $order) {
+                try {
+                    $paymentMethodCode = $order->getPayment()->getMethodInstance()->getCode();
+                    $matchFound = false;
+                    foreach ($orderPaymentStatuses as $status) {
+                        if (isset($status['order_status']) && $status['order_status'] == $order->getStatus()) {
 
-                                if ($status['payment_code'] == null || $status['payment_code'] == $paymentMethodCode) {
-                                    $matchFound = true;
-                                }
+                            if ($status['payment_code'] == null || $status['payment_code'] == $paymentMethodCode) {
+                                $matchFound = true;
                             }
                         }
-                        if ($matchFound) {
-                            $this->exportOrder($order);
-                        }
-                    } catch (Exception $e) {
-                        $this->serviceLog($stream,'Error when exporting order #' . $order->getIncrementId() . ' - ' . $e->getMessage(),
-                            \Monolog\Logger::ERROR);
-
-                        $this->moduleLog(__METHOD__ . ' Error exporting order #' . $order->getIncrementId() . ' ' . $e->getMessage());
-
-                        $this->sendErrorMail(
-                            $this->getErrorEmail(),
-                            'Exception occured during order export to EDG',
-                            "Error when exporting order #{$order->getIncrementId()}."
-                        );
-
-
-                        $this->serviceLog($stream, 'Finished export with exception.', \Monolog\Logger::ERROR);
-                        return $this;
                     }
+                    if ($matchFound) {
+                        $this->exportOrder($order);
+                    }
+                } catch (Exception $e) {
+                    $this->serviceLog($stream,'Error when exporting order #' . $order->getIncrementId() . ' - ' . $e->getMessage(),
+                        Logger::ERROR);
 
+                    $this->moduleLog(__METHOD__ . ' Error exporting order #' . $order->getIncrementId() . ' ' . $e->getMessage());
+
+                    $this->sendErrorMail(
+                        $this->getErrorEmail(),
+                        'Exception occured during order export to EDG',
+                        "Error when exporting order #{$order->getIncrementId()}."
+                    );
+
+
+                    $this->serviceLog($stream, 'Finished export with exception.', Logger::ERROR);
+                    return $this;
                 }
+
             }
         } else {
             $orderId = $this->settings['order_id'];
@@ -227,9 +193,6 @@ class OrderExport extends AbstractCron
      * @param $orderId
      * @return $this
      * @throws NoSuchEntityException
-     * @throws AlreadyExistsException
-     * @throws InputException
-     * @throws Exception
      */
     protected function exportOrder($orderId): OrderExport
     {
@@ -285,7 +248,7 @@ class OrderExport extends AbstractCron
 
     /**
      * @param $orderStatuses
-     * @return SearchCriteriaInterface
+     * @return SearchCriteria
      */
     private function getSearchCriteria($orderStatuses): SearchCriteriaInterface
     {
