@@ -1,3 +1,14 @@
+## 2.1.0 (2022-10-19)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/2.1.0)
+
+*  [FEATURE][SEDG-213] Fixed logger *(Dylan Maurits)*
+*  [FEATURE][SEDG-213] added search criteria *(Dylan Maurits)*
+*  [FEATURE][SEDG-213] Use repository instead of collection *(Daniel R. Azulay)*
+*  [FEATURE][SEDG-213] Re-enable disabled export code *(Daniel R. Azulay)*
+*  [FEATURE][SEDG-218] Use Cas' fix for setting invoice e-mail address *(Daniel R. Azulay)*
+
+
 ## 2.0.0 (2022-06-14)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/2.0.0)
