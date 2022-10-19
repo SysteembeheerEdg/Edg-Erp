@@ -220,7 +220,7 @@ class OrderToDataModel
                 "vat_id"
             ]);
 
-            if ($type = Address::TYPE_BILLING && $order->getInvoiceEmailAddress()) {
+            if ($type == Address::TYPE_BILLING && $order->getInvoiceEmailAddress()) {
                 $data['addresses'][$type]['email'] = $order->getInvoiceEmailAddress();
             }
         }
