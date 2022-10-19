@@ -1,3 +1,10 @@
+## 2.1.1 (2022-10-19)
+
+[View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/2.1.1)
+
+*  [FEATURE][SEDG-218] Fixed if statement *(Dylan Maurits)*
+
+
 ## 2.1.0 (2022-10-19)
 
 [View Release](git@github.com:SysteembeheerEdg/Edg-Erp.git/commits/tag/2.1.0)
