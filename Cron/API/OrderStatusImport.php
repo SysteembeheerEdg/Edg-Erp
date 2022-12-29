@@ -20,6 +20,8 @@ use Magento\Sales\Model\Order\ShipmentFactory;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Store\Model\StoreManager;
 use Monolog\Logger;
+use Magento\Sales\Model\ResourceModel\Order\Shipment\Collection as ShipmentCollection;
+use Magento\Sales\Model\Order\Shipment\TrackFactory;
 
 class OrderStatusImport extends AbstractCron
 {
@@ -57,6 +59,11 @@ class OrderStatusImport extends AbstractCron
     protected TransportBuilder $transportBuilder;
 
     /**
+     * @var TrackFactory
+     */
+    protected TrackFactory $trackFactory;
+
+    /**
      * @param Data $helper
      * @param DirectoryList $directoryList
      * @param Monolog $monolog
@@ -71,23 +78,26 @@ class OrderStatusImport extends AbstractCron
      * @throws FileSystemException
      */
     public function __construct(
-        Data $helper,
-        DirectoryList $directoryList,
-        Monolog $monolog,
-        ConfigInterface $config,
+        Data             $helper,
+        DirectoryList    $directoryList,
+        Monolog          $monolog,
+        ConfigInterface  $config,
         TransportBuilder $transportBuilder,
-        StoreManager $storeManager,
-        OrderFactory $orderFactory,
-        ShipmentFactory $shipmentFactory,
-        Transaction $transaction,
-        ShipmentSender $sender,
-        array $settings = []
-    ) {
+        StoreManager     $storeManager,
+        OrderFactory     $orderFactory,
+        ShipmentFactory  $shipmentFactory,
+        Transaction      $transaction,
+        ShipmentSender   $sender,
+        TrackFactory     $trackFactory,
+        array            $settings = []
+    )
+    {
         parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
         $this->orderFactory = $orderFactory;
         $this->shipmentFactory = $shipmentFactory;
         $this->transaction = $transaction;
         $this->shipmentMailer = $sender;
+        $this->trackFactory = $trackFactory;
     }
 
     /**
@@ -125,7 +135,7 @@ class OrderStatusImport extends AbstractCron
             }
             $orders = $response->getOrders();
             foreach ($orders as $order) {
-                $this->serviceLog($stream,'starting import for order with order number: #' . $order->getOrderNumber());
+                $this->serviceLog($stream, 'starting import for order with order number: #' . $order->getOrderNumber());
                 $orderIncrementId = $this->formatIncrementId($order->getOrderNumber());
                 try {
                     $magentoOrder = $this->orderFactory->create()->loadByIncrementId($orderIncrementId);
@@ -155,28 +165,38 @@ class OrderStatusImport extends AbstractCron
                     $this->serviceLog($stream, "Creating shipment for order #" . $magentoOrder->getIncrementId() . " with items " . print_r($itemsToShip,
                             true));
 
-                    /** @var Shipment $shipment */
-                    $shipment = $this->shipmentFactory->create($magentoOrder, $itemsToShip, $tracks);
-                    $shipment->register();
+                    $shipment = null;
+                    $shipment = $this->createShipment($shipment, $magentoOrder, $itemsToShip, $tracks);
 
                     $status = $order->getOrderStatus();
+                    if ($status != 'complete' && $shipment === null) {
+                        $magentoOrder->setState(Order::STATE_PROCESSING)->addCommentToStatusHistory(
+                            sprintf('Status / state gewijzigd na de order import door EDG koppeling ( Nieuwe status / state: %s )',
+                                Order::STATE_PROCESSING),
+                            Order::STATE_PROCESSING
+                        );
+                    }
                     $magentoOrder->setData("status", $status == "shipped" ? $shippedStatus : "processing");
                     $magentoOrder->setData("state", $status == "shipped" ? $shippedStatus : "processing");
                     $magentoOrder->addStatusToHistory(false, 'order status imported from progress');
 
-                    $this->saveShipment($shipment);
+                    if ($shipment !== null) {
+                        $this->saveShipment($shipment);
 
-                    $this->moduleLog(sprintf('Created shipment #%s (id %s) for order #%s (id %s)',
-                        $shipment->getIncrementId(),
-                        $shipment->getIncrementId(),
-                        $shipment->getId(),
-                        $magentoOrder->getIncrementId(),
-                        $magentoOrder->getId()
-                    ));
+                        $this->moduleLog(sprintf('Created shipment #%s (id %s) for order #%s (id %s)',
+                            $shipment->getIncrementId(),
+                            $shipment->getIncrementId(),
+                            $shipment->getId(),
+                            $magentoOrder->getIncrementId(),
+                            $magentoOrder->getId()
+                        ));
+                    }
 
                     if ($this->helper->getOrderImportSendEmailAfterShipping() == '1') {
-                        $this->shipmentMailer->send($shipment);
-                        $this->moduleLog('Adding shipment email notification for #' . $magentoOrder->getIncrementId());
+                        if ($shipment !== null) {
+                            $this->shipmentMailer->send($shipment);
+                            $this->moduleLog('Adding shipment email notification for #' . $magentoOrder->getIncrementId());
+                        }
                     } else {
                         $this->moduleLog('Bypassing shipment email notification for #' . $magentoOrder->getIncrementId());
                     }
@@ -234,7 +254,7 @@ class OrderStatusImport extends AbstractCron
      * @return array
      */
     protected function getItemsToShip(
-        Order $magentoOrder,
+        Order       $magentoOrder,
         OrderStatus $importData
     ): array
     {
@@ -304,6 +324,43 @@ class OrderStatusImport extends AbstractCron
         )->save();
 
         return $this;
+    }
+
+    /**
+     * @param $shipment
+     * @param $magentoOrder
+     * @param $itemsToShip
+     * @param $tracks
+     * @return Shipment
+     * @throws LocalizedException
+     * @throws Exception
+     */
+    public function createShipment($shipment, $magentoOrder, $itemsToShip, $tracks)
+    {
+        /** @var Order $magentoOrder */
+        if ($magentoOrder->hasShipments() && empty($itemsToShip) && !empty($tracks)) {
+            /** @var ShipmentCollection $shipments */
+            $shipments = $magentoOrder->getShipmentsCollection();
+
+            /** @var Shipment $ship */
+            foreach ($shipments->getItems() as $ship) {
+                //Check if shipment already has track
+                if (count($ship->getAllTracks()) == 0) {
+                    foreach ($tracks as $track) {
+                        $ship->addTrack(
+                            $this->trackFactory->create()->addData($track)
+                        );
+                        //Do shipment saving here and inform in log later that no saving at that point was necessary
+                        $this->saveShipment($ship);
+                    }
+                }
+            }
+        } elseif ($shipment === null) {
+            /** @var Shipment $shipment */
+            $shipment = $this->shipmentFactory->create($magentoOrder, $itemsToShip, $tracks);
+            $shipment->register();
+        }
+        return $shipment;
     }
 
 }
