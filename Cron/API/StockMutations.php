@@ -24,6 +24,11 @@ class StockMutations extends AbstractCron
     protected TransportBuilder $transportBuilder;
 
     /**
+     * @var StockRegistryInterface
+     */
+    protected $stockRegistry;
+
+    /**
      * @param Data $helper
      * @param DirectoryList $directoryList
      * @param Monolog $monolog
@@ -40,8 +45,10 @@ class StockMutations extends AbstractCron
         ConfigInterface $config,
         TransportBuilder $transportBuilder,
         StoreManager $storeManager,
+        StockRegistryInterface $stockRegistry,
         array $settings = []
     ) {
+        $this->stockRegistry = $stockRegistry;
         parent::__construct($helper, $directoryList, $monolog, $config, $transportBuilder, $storeManager, $settings);
     }
 
@@ -88,14 +95,14 @@ class StockMutations extends AbstractCron
                 $sku = $stockMutation->getSku();
                 $qty = $stockMutation->getStock();
                 try {
-                    $stockItem = $this->stockregistry->getStockItemBySku($sku);
+                    $stockItem = $this->stockRegistry->getStockItemBySku($sku);
                     $this->serviceLog($stream, sprintf('Setting product stock qty of sku %s with Magento ID %s to %s', $sku,
                         $stockItem->getProductId(), $qty));
 
                     $oldQty = $stockItem->getQty();
                     $stockItem->setQty($qty);
                     if (round($oldQty, 0) != round($qty, 0)) {
-                        $id = $this->stockregistry->updateStockItemBySku($sku, $stockItem);
+                        $id = $this->stockRegistry->updateStockItemBySku($sku, $stockItem);
 
                         $this->serviceLog($stream, sprintf(
                             'Successfully updated stock for product %s with Magento ID %s and Magento Stock item ID %s from %s to %s',

@@ -282,7 +282,7 @@ class OrderStatusImport extends AbstractCron
         $skuPrefix = $this->helper->getSkuPrefix();
 
         foreach ($magentoOrder->getAllItems() as $item) {
-            $itemSku = $skuPrefix . $item->getSku();
+            $itemSku = $item->getSku();
 
             if ($item->getData("parent_item_id")) {
                 $this->moduleLog(' - Parent item exists, skipping shipping on this one.');
