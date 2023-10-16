@@ -26,7 +26,7 @@ class StockMutationTest extends \PHPUnit_Framework_TestCase
     {
         $objectManager = Bootstrap::getObjectManager();
 
-        $soapMock = $this->getMockFromWsdl(BP . '/vendor/boldcommerce/pim-api-service-edg/tests/_files/edg.wsdl');
+        $soapMock = $this->getMockFromWsdl(BP . '/vendor/edg/module-erp-service/tests/_files/edg.wsdl');
         $client = new \Edg\ErpService\Client();
         $client->setSoapClient($soapMock);
 
