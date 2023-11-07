@@ -99,24 +99,23 @@ class OrderExport extends AbstractCron
     {
         // TODO: Implement execute() method.
         if ($this->settings['force_order_upload'] === true) {
-            $this->prepareExport(true);
+            $this->prepareExport();
             return;
         }
         if ($this->helper->isUploadOrdersEnabled()) {
-            $this->prepareExport(false);
+            $this->prepareExport();
         } else {
             $this->moduleLog(__METHOD__ . '(); - isUploadOrdersEnabled setting disabled, skipping.', true);
         }
     }
 
     /**
-     * @param bool $force
      * @return $this
      * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws Exception
      */
-    protected function prepareExport(bool $force = false): OrderExport
+    protected function prepareExport(): OrderExport
     {
         $date = date("Y_m_d");
         $stream = $this->addLogStreamToServiceLogger($this->_exportDir . DIRECTORY_SEPARATOR . "log_{$date}.log");

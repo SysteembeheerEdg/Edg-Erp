@@ -270,8 +270,6 @@ class OrderStatusImport extends AbstractCron
 
         $itemsToShip = [];
 
-        $skuPrefix = $this->helper->getSkuPrefix();
-
         foreach ($magentoOrder->getAllItems() as $item) {
             $itemSku = $item->getSku();
 

@@ -3,6 +3,7 @@
 namespace Edg\Erp\Observer\Frontend;
 
 
+use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Model\ScopeInterface;
 
@@ -31,7 +32,12 @@ class PreventDuplicateSkuInCheckout implements ObserverInterface
         $this->actionFlag = $actionFlag;
     }
 
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    /**
+     * @param Observer $observer
+     * @return false|void
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function execute(Observer $observer)
     {
         if (!$this->scopeConfig->isSetFlag('bold_orderexim/settings/block_duplicate_sku',
             ScopeInterface::SCOPE_STORE)
