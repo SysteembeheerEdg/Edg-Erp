@@ -160,7 +160,7 @@ class OrderToDataModel
                 }
             }
 
-            if (strlen($comment) > 0) {
+            if (strlen((string)$comment) > 0) {
                 $_buffer[] = $_historyItem->getData('comment');
             }
         }

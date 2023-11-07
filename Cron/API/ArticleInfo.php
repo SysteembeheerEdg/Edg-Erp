@@ -185,7 +185,7 @@ class ArticleInfo extends AbstractCron
         $prefix = $this->helper->getSkuPrefix();
 
         // Truncate prefix
-        $sku = substr($productdata['sku'], strlen($prefix));
+        $sku = substr($productdata['sku'], strlen((string)$prefix));
 
         try {
             $product = $this->productRepository->get($sku, true);
