@@ -44,11 +44,6 @@ class ArticleInfo extends AbstractCron
     protected TierPriceManagement $tierpriceManagement;
 
     /**
-     * @var TransportBuilder
-     */
-    protected TransportBuilder $transportBuilder;
-
-    /**
      * @var Job
      */
     protected Job $catalogRuleJob;

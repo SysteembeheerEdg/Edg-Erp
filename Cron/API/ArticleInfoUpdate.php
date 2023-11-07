@@ -19,11 +19,6 @@ use Magento\Store\Model\StoreManager;
 class ArticleInfoUpdate extends ArticleInfo
 {
     /**
-     * @var TransportBuilder
-     */
-    protected TransportBuilder $transportBuilder;
-
-    /**
      * @param Data $helper
      * @param DirectoryList $directoryList
      * @param Monolog $monolog

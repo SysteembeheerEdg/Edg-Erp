@@ -49,16 +49,6 @@ class OrderStatusImport extends AbstractCron
     protected ShipmentSender $shipmentMailer;
 
     /**
-     * @var Monolog
-     */
-    protected Monolog $monolog;
-
-    /**
-     * @var TransportBuilder
-     */
-    protected TransportBuilder $transportBuilder;
-
-    /**
      * @var TrackFactory
      */
     protected TrackFactory $trackFactory;
@@ -74,6 +64,7 @@ class OrderStatusImport extends AbstractCron
      * @param ShipmentFactory $shipmentFactory
      * @param Transaction $transaction
      * @param ShipmentSender $sender
+     * @param TrackFactory $trackFactory
      * @param array $settings
      * @throws FileSystemException
      */

@@ -39,11 +39,6 @@ class OrderExport extends AbstractCron
     protected OrderToDataModel $orderConverter;
 
     /**
-     * @var TransportBuilder
-     */
-    protected TransportBuilder $transportBuilder;
-
-    /**
      * @var OrderRepositoryInterface
      */
     protected OrderRepositoryInterface $orderRepository;
