@@ -19,11 +19,6 @@ class StockMutations extends AbstractCron
 {
 
     /**
-     * @var TransportBuilder
-     */
-    protected TransportBuilder $transportBuilder;
-
-    /**
      * @var StockRegistryInterface
      */
     protected $stockRegistry;

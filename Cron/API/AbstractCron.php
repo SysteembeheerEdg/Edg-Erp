@@ -253,7 +253,6 @@ abstract class AbstractCron
      * @param int $priority
      * @param array $params
      * @return void
-     * @throws Exception
      */
     protected function serviceLog($stream, $message, int $priority = Logger::INFO, array $params = [])
     {
@@ -271,7 +270,6 @@ abstract class AbstractCron
     /**
      * @param $path
      * @return Logger
-     * @throws Exception
      */
     protected function addLogStreamToServiceLogger($path): Logger
     {

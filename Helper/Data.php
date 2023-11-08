@@ -228,13 +228,11 @@ class Data extends AbstractHelper
     public function log($msg, $debug = false)
     {
         if ($debug) {
-            if ($this->scopeConfig->isSetFlag(self::XML_CONFIG_PATH_SETTING_DEBUG_ENABLED,
-                ScopeInterface::SCOPE_STORE)
-            ) {
-                $this->moduleLog->addDebug($msg);
+            if ($this->scopeConfig->isSetFlag(self::XML_CONFIG_PATH_SETTING_DEBUG_ENABLED, ScopeInterface::SCOPE_STORE)) {
+                $this->moduleLog->debug($msg);
             }
         } else {
-            $this->moduleLog->addInfo($msg);
+            $this->moduleLog->info($msg);
         }
     }
 

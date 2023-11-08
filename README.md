@@ -16,8 +16,8 @@ Delete the Bold_PIM and Bold_PIMService from the app/code directory
 - Run ```rm -rf app/code/Bold/PIMService``` from the root of the project
 
 Install the latest versions of the Edg_Erp and Edg_ErpService modules by adding the modules and the corresponding repositories to the composer.json file
-- ```“edg/module-erp-koppeling": “0.3.0”```
-- ```“edg/module-erp-service": “0.1.1”```
+- ```“edg/module-erp-koppeling": “0.4.0”```
+- ```“edg/module-erp-service": “0.1.2”```
 - ```
   "edg-erp": {
       "type": "git",

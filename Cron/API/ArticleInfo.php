@@ -44,11 +44,6 @@ class ArticleInfo extends AbstractCron
     protected TierPriceManagement $tierpriceManagement;
 
     /**
-     * @var TransportBuilder
-     */
-    protected TransportBuilder $transportBuilder;
-
-    /**
      * @var Job
      */
     protected Job $catalogRuleJob;
@@ -190,7 +185,7 @@ class ArticleInfo extends AbstractCron
         $prefix = $this->helper->getSkuPrefix();
 
         // Truncate prefix
-        $sku = substr($productdata['sku'], strlen($prefix));
+        $sku = substr($productdata['sku'], strlen((string)$prefix));
 
         try {
             $product = $this->productRepository->get($sku, true);
